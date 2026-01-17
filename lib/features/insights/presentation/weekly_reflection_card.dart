@@ -8,10 +8,11 @@ class WeeklyReflectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color(0xFFEEF2FF), // Indigo 50
+      color: AppColors.surface, // Black
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: AppColors.greyMedium),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -24,13 +25,13 @@ class WeeklyReflectionCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "SUNDAY RESET",
                       style: TextStyle(
                         fontSize: 10, 
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
-                        color: AppColors.accentBlueForeground,
+                        color: AppColors.greyLight,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -39,20 +40,21 @@ class WeeklyReflectionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.white,
                       ),
                     ),
                   ],
                 ),
-                Icon(LucideIcons.calendar, color: AppColors.accentBlueForeground.withOpacity(0.5)),
+                const Icon(LucideIcons.calendar, color: AppColors.greyLight),
               ],
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               "Your ideas on Product Strategy are taking shape. You cleared 12 dumps this week.",
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: Colors.indigo.shade900,
+                color: AppColors.white,
               ),
             ),
             const SizedBox(height: 16),
@@ -61,9 +63,9 @@ class WeeklyReflectionCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () {},
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.6),
+                  backgroundColor: AppColors.greyDark,
                   side: BorderSide.none,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.white,
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),

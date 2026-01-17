@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../insights/presentation/daily_insights_card.dart';
 import '../../insights/presentation/weekly_reflection_card.dart';
+import 'pulsing_dot_fab.dart';
+import 'timeline_dot.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,7 +24,7 @@ class HomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "LightNote",
+                    "dots.",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -53,25 +55,36 @@ class HomeScreen extends StatelessWidget {
               Text(
                 "Capture thoughts without friction. Let AI find the patterns.",
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.greyLight,
                 ),
               ).animate().fadeIn(delay: 200.ms),
 
-              const SizedBox(height: 48),
-
-              // Insight Widgets
-              const DailyInsightsCard().animate().slideX(begin: 0.1, delay: 300.ms),
+              // The Universe Timeline
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: const [
+                    TimelineDot(
+                      title: "Daily Insight",
+                      subtitle: "Pattern detected in 3 recent dumps.",
+                      openBuilder: DailyInsightsCard(),
+                    ),
+                    TimelineDot(
+                      title: "Weekly Reflection",
+                      subtitle: "Sunday Reset for Oct 12-19.",
+                      openBuilder: WeeklyReflectionCard(),
+                      isLast: true,
+                    ),
+                  ],
+                ).animate().slideX(begin: 0.1, delay: 200.ms),
+              ),
+              
               const SizedBox(height: 16),
-              const WeeklyReflectionCard().animate().slideX(begin: 0.1, delay: 400.ms),
-
-              const Spacer(),
-
-              // Temporary Navigation Placeholders
-              FilledButton.icon(
-                onPressed: () => context.push('/dump'),
-                icon: const Icon(Icons.add),
-                label: const Text("Just Dump"),
-              ).animate().scale(delay: 400.ms),
+              
+              // Key Action: The Pulsing Dot
+              const Center(child: PulsingDotFAB()),
+              
+              const SizedBox(height: 32),
             ],
           ),
         ),

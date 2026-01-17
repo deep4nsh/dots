@@ -6,29 +6,31 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark, // Default to dark for "Space" feel
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.light(
-        primary: Colors.black, // Primary action color
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.white,
+        onPrimary: AppColors.black,
         surface: AppColors.surface,
-        onSurface: AppColors.textPrimary,
+        onSurface: AppColors.white,
         background: AppColors.background,
-        onBackground: AppColors.textPrimary,
-        outline: AppColors.border,
+        onBackground: AppColors.white,
+        outline: AppColors.greyMedium,
       ),
       
-      // Typography
-      textTheme: GoogleFonts.plusJakartaSansTextTheme().apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
+      // Typography: Geometric, Clean, High Contrast
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: AppColors.white,
+        displayColor: AppColors.white,
       ),
 
       // Card Theme
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: AppColors.greyDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(32), // More rounded
+          side: const BorderSide(color: AppColors.greyMedium, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -36,15 +38,24 @@ class AppTheme {
       // Button Theme
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.white,
+          foregroundColor: AppColors.black,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
+      ),
+      
+      // Floating Action Button
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.black,
+        elevation: 0,
+        shape: CircleBorder(),
       ),
     );
   }

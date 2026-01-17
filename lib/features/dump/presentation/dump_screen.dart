@@ -7,6 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/dump_controller.dart';
 
+import 'package:dots_mobile/core/constants/dump_prompts.dart';
+
 class DumpScreen extends ConsumerStatefulWidget {
   const DumpScreen({super.key});
 
@@ -16,11 +18,19 @@ class DumpScreen extends ConsumerStatefulWidget {
 
 class _DumpScreenState extends ConsumerState<DumpScreen> {
   final TextEditingController _controller = TextEditingController();
+  late String _randomPrompt;
+
+  @override
+  void initState() {
+    super.initState();
+    _randomPrompt = DumpPrompts.getRandom();
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white, // White Sweep
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,9 +47,9 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
             icon: const Icon(LucideIcons.arrowUp, size: 18),
             label: const Text("Dump"),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.accentBlueForeground,
+              foregroundColor: Colors.white,
               shape: const StadiumBorder(),
-              backgroundColor: AppColors.accentBlue,
+              backgroundColor: Colors.black,
             ),
           ),
           const SizedBox(width: 16),
@@ -56,19 +66,19 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.greyDark.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: Colors.black12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.calendar, size: 14, color: AppColors.textSecondary),
+                      const Icon(LucideIcons.calendar, size: 14, color: Colors.black54),
                       const SizedBox(width: 8),
                       Text(
                         "Today, ${DateTime.now().hour}:${DateTime.now().minute}",
                         style: const TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Colors.black87,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -90,13 +100,15 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   fontSize: 24,
                   height: 1.5,
                   fontWeight: FontWeight.w500,
+                  color: Colors.black,
                 ),
-                decoration: const InputDecoration(
-                  hintText: "What's on your mind? \nDon't worry about structure.",
-                  hintStyle: TextStyle(color: Colors.black26),
+                decoration: InputDecoration(
+                  hintText: _randomPrompt,
+                  hintStyle: const TextStyle(color: Colors.black26),
                   border: InputBorder.none,
                 ),
-              ).animate().fadeIn(delay: 200.ms),
+                cursorColor: Colors.black,
+              ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
             ),
             
             // Toolbar
@@ -104,15 +116,8 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -123,7 +128,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   _ToolbarItem(icon: LucideIcons.link, label: "Link"),
                 ],
               ),
-            ).animate().fadeIn(delay: 400.ms).slideY(begin: 1, end: 0),
+            ).animate().fadeIn(delay: 800.ms).slideY(begin: 1, end: 0, curve: Curves.easeOutQuad),
           ],
         ),
       ),
@@ -144,14 +149,14 @@ class _ToolbarItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.textSecondary),
+          Icon(icon, color: Colors.black54),
           const SizedBox(height: 4),
           Text(
             label, 
             style: const TextStyle(
               fontSize: 10, 
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary
+              color: Colors.black54
             )
           ),
         ],

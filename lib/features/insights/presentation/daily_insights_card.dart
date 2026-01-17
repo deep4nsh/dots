@@ -11,7 +11,7 @@ class DailyInsightsCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.greyMedium),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -31,10 +31,10 @@ class DailyInsightsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.accentAmber,
+                    color: AppColors.greyDark,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(LucideIcons.sparkles, size: 16, color: AppColors.accentAmberForeground),
+                  child: const Icon(LucideIcons.sparkles, size: 16, color: AppColors.white),
                 ),
               ],
             ),
@@ -42,15 +42,9 @@ class DailyInsightsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.accentAmber.withOpacity(0.3),
-                    const Color(0xFFFFF7ED),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppColors.greyDark,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.greyMedium),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +54,7 @@ class DailyInsightsCard extends StatelessWidget {
                     height: 40,
                     margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.accentAmberForeground,
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -74,7 +68,7 @@ class DailyInsightsCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF92400E), 
+                            color: AppColors.white, 
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -83,7 +77,7 @@ class DailyInsightsCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.4,
-                            color: const Color(0xFF92400E).withOpacity(0.8),
+                            color: AppColors.white.withOpacity(0.8),
                           ),
                         ),
                       ],
@@ -107,7 +101,7 @@ class DailyInsightsCard extends StatelessWidget {
                 Text(
                   "Generated 2h ago based on new entries",
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.greyLight,
                     fontSize: 11,
                   ),
                 ),

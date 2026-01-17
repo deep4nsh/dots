@@ -1,23 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Backgrounds
-  static const Color background = Color(0xFFF7F7F7);
-  static const Color surface = Colors.white;
-
-  // Text
-  static const Color textPrimary = Colors.black;
-  static const Color textSecondary = Color(0xFF666666);
-
-  // Accents
-  static const Color accentBlue = Color(0xFFE0E7FF);
-  static const Color accentBlueForeground = Color(0xFF4338CA);
+  // Absolute Monochrome
+  static const Color background = Colors.black;
+  static const Color surface = Colors.black;
   
-  static const Color accentAmber = Color(0xFFFEF3C7);
-  static const Color accentAmberForeground = Color(0xFFD97706);
+  // Text & Elements
+  static const Color white = Colors.white;
+  static const Color black = Colors.black;
 
-  static const Color accentIndigo = Color(0xFFE0E7FF); // Reused for consistency or slightly different
-  
-  // UI Elements
-  static const Color border = Color(0xFFE5E5E5);
+  // Accents (Subtle Greys for depth only)
+  static const Color greyDark = Color(0xFF1A1A1A);
+  static const Color greyMedium = Color(0xFF333333);
+  static const Color greyLight = Color(0xFF666666);
 }
