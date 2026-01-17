@@ -21,8 +21,8 @@ class AIService {
       model: 'gemini-1.5-flash', 
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.7, // Creative but grounded
-        responseMimeType: 'application/json', // Force JSON output
+        temperature: 0.7, 
+        responseMimeType: 'application/json',
       ),
     );
     print("✅ AIService Initialized with Gemini");

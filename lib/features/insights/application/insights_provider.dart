@@ -3,16 +3,31 @@ import '../../../core/services/ai_service.dart';
 import '../../home/data/notes_provider.dart';
 
 final dailyInsightProvider = FutureProvider<String?>((ref) async {
-  final repository = ref.watch(notesRepositoryProvider);
+  // Watch the stream provider so this re-runs whenever the timeline changes
+  final notesAsync = ref.watch(notesStreamProvider);
   
-  // 1. Get today's notes
-  final notes = await repository.getTodaysNotes();
-  
-  if (notes.isEmpty) return null;
-  
-  // 2. Extract content
-  final thoughts = notes.map((n) => n['content'] as String).toList();
-  
-  // 3. Generate Digest
-  return await AIService().generateDailyDigest(thoughts);
+  return notesAsync.when(
+    data: (notes) async {
+      if (notes.isEmpty) return null;
+
+      // Filter for today's notes only
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      
+      final todaysNotes = notes.where((n) {
+        final createdAt = DateTime.parse(n['created_at']);
+        return createdAt.isAfter(startOfToday);
+      }).toList();
+
+      if (todaysNotes.isEmpty) return null;
+
+      // Extract content
+      final thoughts = todaysNotes.map((n) => n['content'] as String).toList();
+
+      // Generate Digest
+      return await AIService().generateDailyDigest(thoughts);
+    },
+    loading: () => null,
+    error: (err, stack) => null,
+  );
 });
