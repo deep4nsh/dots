@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../insights/presentation/daily_insights_card.dart';
 import '../../insights/presentation/weekly_reflection_card.dart';
+import '../data/notes_provider.dart';
 import 'pulsing_dot_fab.dart';
 import 'timeline_dot.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notesAsync = ref.watch(notesStreamProvider);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -59,24 +64,53 @@ class HomeScreen extends StatelessWidget {
                 ),
               ).animate().fadeIn(delay: 200.ms),
 
-              // The Universe Timeline
+              const SizedBox(height: 32),
+
+              // AI Synthesis: Daily Digest
+              const DailyInsightsCard().animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
+
+              const SizedBox(height: 32),
+
+              // The Universe Timeline (Real-time Feed)
               Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: const [
-                    TimelineDot(
-                      title: "Daily Insight",
-                      subtitle: "Pattern detected in 3 recent dumps.",
-                      openBuilder: DailyInsightsCard(),
-                    ),
-                    TimelineDot(
-                      title: "Weekly Reflection",
-                      subtitle: "Sunday Reset for Oct 12-19.",
-                      openBuilder: WeeklyReflectionCard(),
-                      isLast: true,
-                    ),
-                  ],
-                ).animate().slideX(begin: 0.1, delay: 200.ms),
+                child: notesAsync.when(
+                  data: (notes) {
+                    if (notes.isEmpty) {
+                      return Center(
+                        child: Text(
+                          "Your timeline is empty.\nTap the dot to start.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.greyMedium),
+                        ),
+                      ).animate().fadeIn();
+                    }
+                    
+                    return ListView.builder(
+                      itemCount: notes.length,
+                      itemBuilder: (context, index) {
+                        final note = notes[index];
+                        final content = note['content'] as String;
+                        final summary = note['summary'] as String?;
+                        final createdAt = DateTime.parse(note['created_at']);
+                        final timeStr = DateFormat('h:mm a').format(createdAt.toLocal());
+                        
+                        return TimelineDot(
+                          title: summary ?? content, // Prefer summary, fallback to content
+                          subtitle: summary != null ? content : timeStr,
+                          isLast: index == notes.length - 1,
+                          // Optional: Pass full note object to a Detail Screen
+                          openBuilder: _NoteDetailPlaceholder(content: content), 
+                        );
+                      },
+                    ).animate().slideX(begin: 0.1, delay: 200.ms);
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                  error: (err, stack) => Center(
+                    child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+                  ),
+                ),
               ),
               
               const SizedBox(height: 16),
@@ -88,6 +122,22 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NoteDetailPlaceholder extends StatelessWidget {
+  final String content;
+  const _NoteDetailPlaceholder({required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Note Detail")),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Text(content, style: const TextStyle(fontSize: 18)),
       ),
     );
   }

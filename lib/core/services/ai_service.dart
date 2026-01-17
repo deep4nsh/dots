@@ -68,4 +68,38 @@ class AIService {
       return null;
     }
   }
+
+  // Synthesize multiple thoughts into a coherent Daily Digest
+  Future<String?> generateDailyDigest(List<String> thoughts) async {
+    if (_model == null || thoughts.isEmpty) return null;
+
+    final thoughtsList = thoughts.map((t) => "- $t").join("\n");
+    
+    final prompt = '''
+    You are an AI assistant for 'dots', a minimalist thought journal.
+    Below are the user's raw thoughts captured today:
+    
+    $thoughtsList
+    
+    TASK:
+    1. Identify common themes or repeating patterns.
+    2. Synthesize these into a single, cohesive "Daily Insight".
+    3. Keep it to 1-2 paragraphs max, high-quality, and reflective. 
+    4. Focus on "connecting the dots" between scattered ideas.
+
+    Return the insight as PLAIN TEXT.
+    ''';
+
+    try {
+      // NOTE: Even though the model is initialized for JSON, 
+      // providing a prompt that asks for plain text often works.
+      // However, if it fails, we might need a separate model instance.
+      final content = [Content.text(prompt)];
+      final response = await _model!.generateContent(content);
+      return response.text;
+    } catch (e) {
+      print("❌ Error generating daily digest: $e");
+      return null;
+    }
+  }
 }
