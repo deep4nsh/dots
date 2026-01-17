@@ -25,7 +25,7 @@ class AIService {
         responseMimeType: 'application/json',
       ),
     );
-    print("✅ AIService Initialized with Gemini");
+    print("✅ AIService Initialized with model: gemini-1.5-flash");
   }
 
   // Analyze a raw thought using Gemini
@@ -91,11 +91,15 @@ class AIService {
     ''';
 
     try {
-      // NOTE: Even though the model is initialized for JSON, 
-      // providing a prompt that asks for plain text often works.
-      // However, if it fails, we might need a separate model instance.
+      // Explicitly override the global JSON config to request plain text
       final content = [Content.text(prompt)];
-      final response = await _model!.generateContent(content);
+      final response = await _model!.generateContent(
+        content,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'text/plain',
+          temperature: 0.7,
+        ),
+      );
       return response.text;
     } catch (e) {
       print("❌ Error generating daily digest: $e");

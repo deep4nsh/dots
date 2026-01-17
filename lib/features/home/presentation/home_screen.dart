@@ -3,8 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../insights/presentation/daily_insights_card.dart';
 import '../../insights/presentation/weekly_reflection_card.dart';
 import '../data/notes_provider.dart';
 import 'pulsing_dot_fab.dart';
@@ -64,12 +64,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ).animate().fadeIn(delay: 200.ms),
 
-              const SizedBox(height: 32),
-
-              // AI Synthesis: Daily Digest
-              const DailyInsightsCard().animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
-
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
               // The Universe Timeline (Real-time Feed)
               Expanded(
@@ -116,7 +111,22 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               
               // Key Action: The Pulsing Dot
-              const Center(child: PulsingDotFAB()),
+              // Key Action: The Pulsing Dot & AI Star
+              Column(
+                children: [
+                  const PulsingDotFAB(),
+                  const SizedBox(height: 16),
+                  IconButton(
+                    onPressed: () => context.push('/deep-insight'),
+                    icon: Icon(
+                      LucideIcons.sparkles, 
+                      color: AppColors.white,
+                      size: 28,
+                    ),
+                    tooltip: "Deep Insight",
+                  ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
+                ],
+              ),
               
               const SizedBox(height: 32),
             ],

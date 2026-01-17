@@ -20,12 +20,14 @@ class DumpController extends AsyncNotifier<void> {
       String? mood;
       String? summary;
       List<String>? keywords;
+      List<String>? actionItems;
 
       if (aiResult != null) {
         print('🧠 AI Analysis Result: $aiResult');
         mood = aiResult['mood']?.toString();
         summary = aiResult['summary']?.toString();
         keywords = (aiResult['keywords'] as List?)?.map((e) => e.toString()).toList();
+        actionItems = (aiResult['action_items'] as List?)?.map((e) => e.toString()).toList();
       } else {
         print('❌ AI Analysis Failed or returned null');
       }
@@ -36,6 +38,7 @@ class DumpController extends AsyncNotifier<void> {
         mood: mood,
         summary: summary,
         keywords: keywords,
+        actionItems: actionItems,
       );
     });
   }

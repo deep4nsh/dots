@@ -9,6 +9,8 @@ import 'features/home/presentation/home_screen.dart';
 import 'features/dump/presentation/dump_screen.dart';
 import 'features/splash/presentation/splash_screen.dart';
 
+import 'features/insights/presentation/deep_insight_screen.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -34,6 +36,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/dump',
       builder: (context, state) => const DumpScreen(),
+    ),
+    GoRoute(
+      path: '/deep-insight',
+      builder: (context, state) => const DeepInsightScreen(),
     ),
   ],
 );
