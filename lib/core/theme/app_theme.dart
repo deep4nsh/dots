@@ -50,6 +50,7 @@ class AppTheme {
         ),
       ),
       
+      
       // Floating Action Button
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.white,
@@ -57,6 +58,11 @@ class AppTheme {
         elevation: 0,
         shape: CircleBorder(),
       ),
+      
+      // Interaction Patterns
+      splashFactory: InkRipple.splashFactory, // Fluid "Water Drop" Ripple
+      highlightColor: Colors.white.withOpacity(0.1), // Subtle white highlight
+      splashColor: Colors.white.withOpacity(0.1), // Subtle white splash
     );
   }
 }

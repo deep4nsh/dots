@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/ai_provider.dart';
+import '../../../../core/services/ai_service.dart';
 
 class DumpController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {
-    // Initial state is null/void
     return null;
   }
 
@@ -14,10 +13,18 @@ class DumpController extends AsyncNotifier<void> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final aiService = ref.read(aiServiceProvider);
-      // For now, just print the response. In real app, save to DB.
-      final response = await aiService.generateInsight('Analyze this thought: "$text"');
-      print('AI Insight: $response');
+      // Use the new Singleton Service
+      final result = await AIService().analyzeThought(text);
+      
+      if (result != null) {
+        print('🧠 AI Analysis Result:');
+        print('Mood: ${result['mood']}');
+        print('Summary: ${result['summary']}');
+        print('Keywords: ${result['keywords']}');
+        print('Actions: ${result['action_items']}');
+      } else {
+        print('❌ AI Analysis Failed or returned null');
+      }
     });
   }
 }

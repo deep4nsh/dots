@@ -27,6 +27,17 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<void>>(dumpControllerProvider, (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analysis failed: ${next.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.white, // White Sweep
       appBar: AppBar(
@@ -37,18 +48,31 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () async {
-               await ref.read(dumpControllerProvider.notifier).saveDump(_controller.text);
-               if (mounted) context.pop(); 
-            },
-            icon: const Icon(LucideIcons.arrowUp, size: 18),
-            label: const Text("Dump"),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              shape: const StadiumBorder(),
-              backgroundColor: Colors.black,
-            ),
+          Consumer(
+            builder: (context, ref, child) {
+              final dumpState = ref.watch(dumpControllerProvider);
+              final isLoading = dumpState.isLoading;
+
+              return TextButton.icon(
+                onPressed: isLoading ? null : () async {
+                   await ref.read(dumpControllerProvider.notifier).saveDump(_controller.text);
+                   if (context.mounted) context.pop(); 
+                },
+                icon: isLoading 
+                    ? const SizedBox(
+                        width: 18, 
+                        height: 18, 
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                      )
+                    : const Icon(LucideIcons.arrowUp, size: 18),
+                label: Text(isLoading ? "Thinking..." : "Dump"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  backgroundColor: isLoading ? Colors.grey : Colors.black,
+                ),
+              );
+            }
           ),
           const SizedBox(width: 16),
         ],
