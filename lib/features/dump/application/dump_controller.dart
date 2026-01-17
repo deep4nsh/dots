@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/ai_service.dart';
+import '../data/notes_repository.dart';
 
 class DumpController extends AsyncNotifier<void> {
   @override
@@ -13,18 +14,29 @@ class DumpController extends AsyncNotifier<void> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      // Use the new Singleton Service
-      final result = await AIService().analyzeThought(text);
+      // 1. Analyze with AI
+      final aiResult = await AIService().analyzeThought(text);
       
-      if (result != null) {
-        print('🧠 AI Analysis Result:');
-        print('Mood: ${result['mood']}');
-        print('Summary: ${result['summary']}');
-        print('Keywords: ${result['keywords']}');
-        print('Actions: ${result['action_items']}');
+      String? mood;
+      String? summary;
+      List<String>? keywords;
+
+      if (aiResult != null) {
+        print('🧠 AI Analysis Result: $aiResult');
+        mood = aiResult['mood']?.toString();
+        summary = aiResult['summary']?.toString();
+        keywords = (aiResult['keywords'] as List?)?.map((e) => e.toString()).toList();
       } else {
         print('❌ AI Analysis Failed or returned null');
       }
+
+      // 2. Save to Supabase (Cloud)
+      await NotesRepository().createNote(
+        content: text,
+        mood: mood,
+        summary: summary,
+        keywords: keywords,
+      );
     });
   }
 }

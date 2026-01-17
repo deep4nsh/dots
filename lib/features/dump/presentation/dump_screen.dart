@@ -44,7 +44,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: Colors.black),
+          icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
           onPressed: () => context.pop(),
         ),
         actions: [
