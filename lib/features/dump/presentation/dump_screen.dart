@@ -7,60 +7,24 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/dump_controller.dart';
 
-import 'package:dots_mobile/core/constants/dump_prompts.dart';
+import 'package:dots_mobile/core/presentation/widgets/aesthetic_dots_background.dart'; // Import
 
-class DumpScreen extends ConsumerStatefulWidget {
-  const DumpScreen({super.key});
+// ... inside _DumpScreenState build method ...
 
-  @override
-  ConsumerState<DumpScreen> createState() => _DumpScreenState();
-}
-
-class _DumpScreenState extends ConsumerState<DumpScreen> {
-  final TextEditingController _controller = TextEditingController();
-  late String _randomPrompt;
-
-  @override
-  void initState() {
-    super.initState();
-    _randomPrompt = DumpPrompts.getRandom();
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white, // White Sweep
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: Colors.black),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-               await ref.read(dumpControllerProvider.notifier).saveDump(_controller.text);
-               if (mounted) context.pop(); 
-            },
-            icon: const Icon(LucideIcons.arrowUp, size: 18),
-            label: const Text("Dump"),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              shape: const StadiumBorder(),
-              backgroundColor: Colors.black,
-            ),
+      body: Stack(
+        children: [
+          // Aesthetic Background Dots
+          const Positioned.fill(
+            child: AestheticDotsBackground(dotCount: 20),
           ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            // Date / Context
+          
+          // Main Content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                // Date / Context
             Row(
               children: [
                 Container(
@@ -157,8 +121,8 @@ class _ToolbarItem extends StatelessWidget {
               fontSize: 10, 
               fontWeight: FontWeight.w600,
               color: Colors.black54
-            )
-          ),
+            ),
+          ).animate(interval: 100.ms),
         ],
       ),
     );
