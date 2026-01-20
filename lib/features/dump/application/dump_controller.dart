@@ -14,6 +14,7 @@ class DumpController extends AsyncNotifier<void> {
     String? voicePath,
     String? imagePath,
     String? linkUrl,
+    bool isScan = false,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -89,6 +90,7 @@ class DumpController extends AsyncNotifier<void> {
         voiceUrl: voiceUrl,
         imageUrl: imageUrl,
         linkUrl: linkUrl,
+        isScan: isScan,
       );
     });
   }

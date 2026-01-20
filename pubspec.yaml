@@ -51,6 +51,7 @@ dependencies:
   audioplayers: ^5.2.1
   url_launcher: ^6.2.2
   any_link_preview: ^3.0.1
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

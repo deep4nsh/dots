@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:async';
 
 class DumpScreen extends ConsumerStatefulWidget {
   const DumpScreen({super.key});
@@ -27,9 +28,16 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   String? _imagePath;
   String? _voicePath;
   String? _linkUrl;
+  bool _isScan = false;
   
   final AudioRecorder _recorder = AudioRecorder();
   final ImagePicker _picker = ImagePicker();
+
+  // Recording Visuals State
+  bool _isRecording = false;
+  StreamSubscription<Amplitude>? _amplitudeSubscription;
+  double _currentAmplitude = -160.0;
+  final List<double> _amplitudes = List.filled(30, -160.0, growable: true);
 
   @override
   void initState() {
@@ -40,6 +48,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _amplitudeSubscription?.cancel();
     _recorder.dispose();
     super.dispose();
   }
@@ -47,7 +56,10 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   Future<void> _handleImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() => _imagePath = image.path);
+      setState(() {
+        _imagePath = image.path;
+        _isScan = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Image attached')),
       );
@@ -57,7 +69,10 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   Future<void> _handleScan() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      setState(() => _imagePath = image.path);
+      setState(() {
+        _imagePath = image.path;
+        _isScan = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Scan attached')),
       );
@@ -67,7 +82,12 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   Future<void> _handleVoice() async {
     if (await _recorder.isRecording()) {
       final path = await _recorder.stop();
-      setState(() => _voicePath = path);
+      _amplitudeSubscription?.cancel();
+      setState(() {
+        _voicePath = path;
+        _isRecording = false;
+        _currentAmplitude = -160.0;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Voice recording attached')),
       );
@@ -75,7 +95,21 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
       if (await _recorder.hasPermission()) {
         final directory = await getApplicationDocumentsDirectory();
         final path = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        
         await _recorder.start(const RecordConfig(), path: path);
+        
+        setState(() => _isRecording = true);
+
+        _amplitudeSubscription = _recorder
+            .onAmplitudeChanged(const Duration(milliseconds: 50))
+            .listen((amp) {
+          setState(() {
+            _currentAmplitude = amp.current;
+            _amplitudes.removeAt(0);
+            _amplitudes.add(amp.current);
+          });
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recording started... Tap again to stop')),
         );
@@ -144,6 +178,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                      voicePath: _voicePath,
                      imagePath: _imagePath,
                      linkUrl: _linkUrl,
+                     isScan: _isScan,
                    );
                    if (context.mounted) context.pop(); 
                 },
@@ -230,6 +265,60 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 ),
                 
+                // Recording Visuals
+                if (_isRecording)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ).animate(onPlay: (controller) => controller.repeat())
+                           .fadeIn(duration: 500.ms)
+                           .fadeOut(delay: 500.ms, duration: 500.ms),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Recording...",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 40,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: _amplitudes.map((amp) {
+                            // Map amplitude (-160 to 0) to height (2 to 40)
+                            double height = ((amp + 160) / 160) * 38 + 2;
+                            return Container(
+                              width: 3,
+                              height: height,
+                              margin: const EdgeInsets.symmetric(horizontal: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                
                 // Attachment Preview
                 if (_imagePath != null || _voicePath != null || _linkUrl != null)
                 Container(
@@ -265,6 +354,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                           _imagePath = null;
                           _voicePath = null;
                           _linkUrl = null;
+                          _isScan = false;
                         }),
                         child: const Icon(LucideIcons.x, size: 14, color: Colors.black54),
                       ),

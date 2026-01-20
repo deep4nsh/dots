@@ -22,4 +22,18 @@ class SupabaseService {
     );
     print("✅ Supabase Initialized");
   }
+
+  /* 
+  SQL TO RUN IN SUPABASE SQL EDITOR:
+  
+  -- Add user_id column to notes table
+  ALTER TABLE notes ADD COLUMN user_id UUID REFERENCES auth.users(id);
+
+  -- Enable RLS
+  ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+  -- Create policy to allow users to see only their own notes
+  CREATE POLICY "Users can only access their own notes" ON notes
+  FOR ALL USING (auth.uid() = user_id);
+  */
 }

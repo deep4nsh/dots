@@ -113,6 +113,10 @@ class HomeScreen extends ConsumerWidget {
                           title: summary ?? content, // Prefer summary, fallback to content
                           subtitle: summary != null ? content : timeStr,
                           isLast: index == notes.length - 1,
+                          hasVoice: note['voice_url'] != null,
+                          hasImage: note['image_url'] != null,
+                          hasLink: note['link_url'] != null,
+                          isScan: note['is_scan'] == true,
                           openBuilder: NoteDetailScreen(note: note), 
                         );
                       },

@@ -70,6 +70,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final note = widget.note;
+    print("🔍 NoteDetailScreen: Displaying note: $note");
     final content = note['content'] as String;
     final summary = note['summary'] as String?;
     final mood = note['mood'] as String? ?? 'Neutral';
@@ -91,6 +92,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final imageUrl = note['image_url'] as String?;
     final voiceUrl = note['voice_url'] as String?;
     final linkUrl = note['link_url'] as String?;
+    final isScan = note['is_scan'] as bool? ?? false;
 
     final moodColor = _getMoodColor(mood);
 
@@ -151,7 +153,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       
                       // Multimedia Section
                       if (imageUrl != null || voiceUrl != null || linkUrl != null)
-                      _buildMultimediaSection(imageUrl, voiceUrl, linkUrl),
+                      _buildMultimediaSection(imageUrl, voiceUrl, linkUrl, isScan),
                       
                       const SizedBox(height: 32),
                       
@@ -402,87 +404,158 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     ).animate().fadeIn(delay: 500.ms);
   }
 
-  Widget _buildMultimediaSection(String? imageUrl, String? voiceUrl, String? linkUrl) {
+  Widget _buildMultimediaSection(String? imageUrl, String? voiceUrl, String? linkUrl, bool isScan) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (imageUrl != null)
-        GestureDetector(
-          onTap: () => _showFullScreenImage(imageUrl),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 24.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                loadingBuilder: (context, child, p) => p == null ? child : Container(height: 200, color: Colors.white12, child: const Center(child: CircularProgressIndicator())),
-              ),
-            ),
-          ).animate().fadeIn().scale(),
-        ),
+        _buildImagePreview(imageUrl, isScan),
         
-        if (voiceUrl != null)
-        _buildVoicePlayer(voiceUrl),
+        if (voiceUrl != null) ...[
+          const SizedBox(height: 12),
+          _buildVoicePlayer(voiceUrl),
+        ],
 
-        if (linkUrl != null)
-        _buildLinkPreview(linkUrl),
+        if (linkUrl != null) ...[
+          const SizedBox(height: 12),
+          _buildLinkPreview(linkUrl),
+        ],
       ],
     );
   }
 
-  Widget _buildVoicePlayer(String url) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _playVoice(url),
+  Widget _buildImagePreview(String url, bool isScan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(isScan ? LucideIcons.scanLine : LucideIcons.image, color: Colors.white38, size: 14),
+            const SizedBox(width: 8),
+            Text(
+              isScan ? "DOCUMENT SCAN" : "IMAGE ATTACHMENT",
+              style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => _showFullScreenImage(url),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
             child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: Colors.black, size: 20),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Stack(
+                children: [
+                  Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    loadingBuilder: (context, child, p) => p == null ? child : Container(height: 200, color: Colors.white12, child: const Center(child: CircularProgressIndicator())),
+                  ),
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.maximize2, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              children: [
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                  ),
-                  child: Slider(
-                    value: _position.inMilliseconds.toDouble(),
-                    max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
-                    onChanged: (v) => _audioPlayer.seek(Duration(milliseconds: v.toInt())),
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white12,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_formatDuration(_position), style: const TextStyle(color: Colors.white38, fontSize: 10)),
-                      Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white38, fontSize: 10)),
+        ),
+      ],
+    ).animate().fadeIn().scale();
+  }
+
+  Widget _buildVoicePlayer(String url) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(LucideIcons.mic, color: Colors.white38, size: 14),
+            const SizedBox(width: 8),
+            Text(
+              "VOICE NOTE",
+              style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => _playVoice(url),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _isPlaying ? Colors.redAccent : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      if (_isPlaying)
+                      BoxShadow(color: Colors.redAccent.withOpacity(0.4), blurRadius: 15, spreadRadius: 1),
                     ],
                   ),
+                  child: Icon(
+                    _isPlaying ? LucideIcons.pause : LucideIcons.play, 
+                    color: _isPlaying ? Colors.white : Colors.black, 
+                    size: 20
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  children: [
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: Colors.white10,
+                        thumbColor: Colors.white,
+                      ),
+                      child: Slider(
+                        value: _position.inMilliseconds.toDouble(),
+                        max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
+                        onChanged: (v) => _audioPlayer.seek(Duration(milliseconds: v.toInt())),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(_formatDuration(_position), style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     ).animate().fadeIn().slideX();
   }
 

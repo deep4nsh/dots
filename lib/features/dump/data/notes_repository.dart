@@ -21,6 +21,7 @@ class NotesRepository {
     String? voiceUrl,
     String? imageUrl,
     String? linkUrl,
+    bool isScan = false,
   }) async {
     try {
       final payload = {
@@ -39,6 +40,8 @@ class NotesRepository {
         'voice_url': voiceUrl,
         'image_url': imageUrl,
         'link_url': linkUrl,
+        'is_scan': isScan,
+        'user_id': _client.auth.currentUser?.id,
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
       print("📤 Saving to Supabase Payload: $payload");
@@ -70,9 +73,11 @@ class NotesRepository {
   // Get real-time stream of notes
   Stream<List<Map<String, dynamic>>> getNotesStream() {
     print("📡 NotesRepository: Initializing stream for 'notes' table...");
+    final userId = _client.auth.currentUser?.id;
     return _client
         .from('notes')
         .stream(primaryKey: ['id'])
+        .eq('user_id', userId ?? '')
         .order('created_at', ascending: false)
         .limit(50)
         .map((data) {
@@ -90,9 +95,11 @@ class NotesRepository {
     final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
     
     try {
+      final userId = _client.auth.currentUser?.id;
       final response = await _client
           .from('notes')
           .select()
+          .eq('user_id', userId ?? '')
           .gte('created_at', startOfDay)
           .order('created_at', ascending: false);
       

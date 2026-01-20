@@ -7,6 +7,10 @@ class TimelineDot extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool isLast;
+  final bool hasImage;
+  final bool hasVoice;
+  final bool hasLink;
+  final bool isScan;
 
   const TimelineDot({
     super.key,
@@ -14,6 +18,10 @@ class TimelineDot extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.isLast = false,
+    this.hasImage = false,
+    this.hasVoice = false,
+    this.hasLink = false,
+    this.isScan = false,
   });
 
   @override
@@ -79,6 +87,29 @@ class TimelineDot extends StatelessWidget {
                             color: AppColors.greyLight,
                           ),
                         ),
+                        if (hasImage || hasVoice || hasLink) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (hasVoice)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 8),
+                                  child: Icon(Icons.mic, size: 12, color: Colors.redAccent),
+                                ),
+                              if (hasImage)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Icon(
+                                    isScan ? Icons.document_scanner : Icons.image, 
+                                    size: 12, 
+                                    color: Colors.blueAccent
+                                  ),
+                                ),
+                              if (hasLink)
+                                const Icon(Icons.link, size: 12, color: Colors.greenAccent),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   );
