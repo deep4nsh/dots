@@ -23,13 +23,13 @@ class DumpController extends AsyncNotifier<void> {
       List<String>? actionItems;
 
       if (aiResult != null) {
-        print('🧠 AI Analysis Result: $aiResult');
+        print('🧠 AI Analysis Success: $aiResult');
         mood = aiResult['mood']?.toString();
         summary = aiResult['summary']?.toString();
         keywords = (aiResult['keywords'] as List?)?.map((e) => e.toString()).toList();
         actionItems = (aiResult['action_items'] as List?)?.map((e) => e.toString()).toList();
       } else {
-        print('❌ AI Analysis Failed or returned null');
+        print('❌ AI Analysis Failed: aiResult is null. Saving note without AI metadata.');
       }
 
       // 2. Save to Supabase (Cloud)

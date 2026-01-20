@@ -17,62 +17,119 @@ class AIService {
       return;
     }
     
+    // Initialize with relaxed safety settings for a private journal
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash', 
+      model: 'gemini-pro', 
       apiKey: apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.7, 
         responseMimeType: 'application/json',
       ),
+      safetySettings: [
+        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
+      ],
     );
-    print("✅ AIService Initialized with model: gemini-1.5-flash");
+    print("✅ AIService Initialized with model: gemini-pro (Safety relaxed)");
   }
 
   // Analyze a raw thought using Gemini
   Future<Map<String, dynamic>?> analyzeThought(String thought) async {
     if (_model == null) {
-      print("❌ AIService not initialized. Check API Key.");
+      print("❌ AIService: Model not initialized.");
       return null;
     }
 
     if (thought.trim().isEmpty) return null;
 
+    print("🧠 AIService: Analyzing thought: '$thought'");
+
+    // Define Schema for structured JSON output
+    final responseSchema = Schema.object(
+      properties: {
+        'mood': Schema.string(description: 'The inferred mood of the user'),
+        'summary': Schema.string(description: 'A concise 1-sentence summary'),
+        'action_items': Schema.array(items: Schema.string(description: 'Actionable steps')),
+        'keywords': Schema.array(items: Schema.string(description: '3-5 key topics')),
+      },
+      requiredProperties: ['mood', 'summary', 'action_items', 'keywords'],
+    );
+
     final prompt = '''
-    You are an AI assistant for a minimalist thought capture app called 'dots'. 
-    Analyze the following user thought and extract structured data.
+    Analyze the following user thought for a minimalist journal.
+    Extract the mood, a summary, action items (to-dos), and key topics.
     
     User Thought: "$thought"
-    
-    Return a STRICT JSON object with these fields:
-    - "mood": (String) The inferred mood/tone (e.g., "Anxious", "Excited", "Neutral").
-    - "summary": (String) A concise 1-sentence summary of the thought.
-    - "action_items": (List<String>) Any tasks, to-dos, or actionable steps implied. If none, return empty list.
-    - "keywords": (List<String>) 3-5 key topics.
-    
-    JSON:
     ''';
 
     try {
       final content = [Content.text(prompt)];
-      final response = await _model!.generateContent(content);
       
-      final responseText = response.text;
-      if (responseText == null) return null;
+      final response = await _model!.generateContent(
+        content,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          responseSchema: responseSchema,
+          temperature: 0.4, 
+        ),
+      );
+      
+      // Log safety candidate if available
+      if (response.candidates.isNotEmpty) {
+        final finishReason = response.candidates.first.finishReason;
+        if (finishReason != null && finishReason != FinishReason.stop) {
+          print("⚠️ AIService: Content blocked or unfinished. Reason: $finishReason");
+        }
+      }
 
-      // Clean markdown code blocks if present (e.g. ```json ... ```)
-      String cleanJson = responseText.replaceAll(RegExp(r'^```json\s*|\s*```$'), '');
+      final responseText = response.text;
+      print("🧠 AIService: Raw response: $responseText");
+
+      if (responseText == null || responseText.isEmpty) {
+        print("⚠️ AIService: Gemini returned null or empty text.");
+        return null;
+      }
+
+      // Sanitize response: Remove Markdown code blocks if present
+      String cleanText = responseText;
+      if (cleanText.contains('```json')) {
+        cleanText = cleanText.replaceAll('```json', '').replaceAll('```', '');
+      } else if (cleanText.contains('```')) {
+        cleanText = cleanText.replaceAll('```', '');
+      }
       
-      return jsonDecode(cleanJson);
-    } catch (e) {
-      print("❌ Error analyzing thought: $e");
+      cleanText = cleanText.trim();
+
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(cleanText);
+        print("✅ AIService: Successfully decoded JSON: $decoded");
+        return decoded;
+      } catch (e) {
+        print("❌ AIService JSON Decode Error: $e");
+        print("❌ Failed raw text: $cleanText");
+        return null;
+      }
+    } catch (e, stack) {
+      print("❌ AIService analyzeThought Error: $e");
       return null;
     }
   }
 
   // Synthesize multiple thoughts into a coherent Daily Digest
   Future<String?> generateDailyDigest(List<String> thoughts) async {
-    if (_model == null || thoughts.isEmpty) return null;
+    if (_model == null) {
+      print("❌ AIService: Model is null.");
+      return null;
+    }
+    if (thoughts.isEmpty) {
+      print("ℹ️ AIService: No thoughts to synthesize.");
+      return null;
+    }
 
+    print("🧠 AIService: Synthesizing ${thoughts.length} thoughts...");
+    
     final thoughtsList = thoughts.map((t) => "- $t").join("\n");
     
     final prompt = '''
@@ -91,7 +148,6 @@ class AIService {
     ''';
 
     try {
-      // Explicitly override the global JSON config to request plain text
       final content = [Content.text(prompt)];
       final response = await _model!.generateContent(
         content,
@@ -99,10 +155,22 @@ class AIService {
           responseMimeType: 'text/plain',
           temperature: 0.7,
         ),
+        safetySettings: [
+          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
+        ],
       );
-      return response.text;
-    } catch (e) {
-      print("❌ Error generating daily digest: $e");
+      
+      final text = response.text;
+      if (text == null || text.isEmpty) {
+        print("⚠️ AIService: Gemini returned empty text.");
+        return null;
+      }
+      return text;
+    } catch (e, stack) {
+      print("❌ AIService Error: $e");
       return null;
     }
   }

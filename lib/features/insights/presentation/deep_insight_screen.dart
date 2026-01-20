@@ -49,7 +49,7 @@ class DeepInsightScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildActionButtons(context),
+              _buildActionButtons(context, ref),
             ],
           ),
         ),
@@ -157,31 +157,49 @@ class DeepInsightScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref) {
+    return Column(
       children: [
-        Expanded(
-          child: _InsightActionButton(
-            icon: LucideIcons.share2,
-            label: "Share",
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Sharing preview...")),
-              );
-            },
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _InsightActionButton(
+                icon: LucideIcons.share2,
+                label: "Share",
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Sharing preview...")),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _InsightActionButton(
+                icon: LucideIcons.bookmark,
+                label: "Save",
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Insight saved to your universe.")),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _InsightActionButton(
-            icon: LucideIcons.bookmark,
-            label: "Save",
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Insight saved to your universe.")),
-              );
-            },
-          ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton.icon(
+              onPressed: () => ref.refresh(dailyInsightProvider),
+              icon: const Icon(LucideIcons.refreshCw, size: 14, color: AppColors.greyLight),
+              label: const Text(
+                "Regenerate Insight",
+                style: TextStyle(color: AppColors.greyLight, fontSize: 13),
+              ),
+            ),
+          ],
         ),
       ],
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);

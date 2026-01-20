@@ -54,7 +54,7 @@ class DailyInsightsCard extends ConsumerWidget {
               error: (err, stack) => _buildErrorState(err.toString()),
             ),
             const SizedBox(height: 12),
-            _buildFooter(context),
+            _buildFooter(context, ref),
           ],
         ),
       ),
@@ -147,24 +147,37 @@ class DailyInsightsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, WidgetRef ref) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: const BoxDecoration(
-            color: Colors.green,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          "AI Synthesis • Live",
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.greyLight,
-                fontSize: 11,
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
               ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "AI Synthesis • Live",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.greyLight,
+                    fontSize: 11,
+                  ),
+            ),
+          ],
+        ),
+        TextButton.icon(
+          onPressed: () => ref.refresh(dailyInsightProvider),
+          icon: const Icon(LucideIcons.refreshCw, size: 12, color: AppColors.greyLight),
+          label: const Text(
+            "Regenerate",
+            style: TextStyle(color: AppColors.greyLight, fontSize: 11),
+          ),
         ),
       ],
     );

@@ -12,14 +12,16 @@ class NotesRepository {
     List<String>? actionItems,
   }) async {
     try {
-      await _client.from('notes').insert({
+      final payload = {
         'content': content,
         'mood': mood,
         'summary': summary,
         'keywords': keywords,
         'action_items': actionItems,
         'created_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      };
+      print("📤 Saving to Supabase Payload: $payload");
+      await _client.from('notes').insert(payload);
       print("✅ Note saved to Supabase");
     } catch (e) {
       print("❌ Error saving note: $e");
