@@ -31,12 +31,19 @@ class NotesRepository {
 
   // Get real-time stream of notes
   Stream<List<Map<String, dynamic>>> getNotesStream() {
+    print("📡 NotesRepository: Initializing stream for 'notes' table...");
     return _client
         .from('notes')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
         .limit(50)
-        .map((data) => List<Map<String, dynamic>>.from(data));
+        .map((data) {
+          print("📡 NotesRepository: Stream received ${data.length} notes");
+          if (data.isNotEmpty) {
+            print("📡 NotesRepository: First note preview: ${data.first['content']}");
+          }
+          return List<Map<String, dynamic>>.from(data);
+        });
   }
 
   // Fetch all notes from today
@@ -54,6 +61,19 @@ class NotesRepository {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       print("❌ Error fetching today's notes: $e");
+      return [];
+    }
+  }
+
+  // Simple fetch for testing connectivity
+  Future<List<Map<String, dynamic>>> testFetch() async {
+    try {
+      print("🧪 NotesRepository: Running testFetch()...");
+      final response = await _client.from('notes').select().limit(10);
+      print("🧪 NotesRepository: testFetch found ${response.length} items");
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print("❌ NotesRepository: testFetch FAILED: $e");
       return [];
     }
   }

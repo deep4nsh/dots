@@ -17,6 +17,25 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesStreamProvider);
 
+    // Logging for debugging
+    notesAsync.when(
+      data: (notes) => print("📊 HomeScreen: Received ${notes.length} notes via Stream"),
+      loading: () => print("📊 HomeScreen: Loading notes via Stream..."),
+      error: (err, stack) => print("📊 HomeScreen: Error loading notes via Stream: $err"),
+    );
+
+    // One-time fetch to verify connectivity
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+       try {
+         final repository = ref.read(notesRepositoryProvider);
+         print("🧪 Debug: Attempting manual one-time fetch...");
+         final notes = await repository.testFetch();
+         print("🧪 Debug: Manual fetch found ${notes.length} notes total");
+       } catch (e) {
+         print("🧪 Debug: Manual fetch FAILED: $e");
+       }
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
