@@ -2,17 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/ai_service.dart';
 import '../../home/data/notes_provider.dart';
 
-final dailyInsightProvider = FutureProvider<String?>((ref) async {
+import '../domain/daily_insight.dart';
+
+final dailyInsightProvider = FutureProvider<DailyInsight?>((ref) async {
   // 1. Await the latest notes from the stream
   final notes = await ref.watch(notesStreamProvider.future);
   
   if (notes.isEmpty) {
-    print("ℹ️ Synthesis: No notes found in stream.");
     return null;
   }
 
-  // 2. Filter for today's notes (resilient to UTC/Local mismatch)
-  // We'll broaden the definition of 'today' to the last 24 hours to be safe
+  // 2. Filter for today's notes (last 24 hours)
   final now = DateTime.now();
   final last24Hours = now.subtract(const Duration(hours: 24)).toUtc();
   
@@ -21,20 +21,62 @@ final dailyInsightProvider = FutureProvider<String?>((ref) async {
     return createdAt.isAfter(last24Hours);
   }).toList();
 
-  print("ℹ️ Synthesis: Total notes: ${notes.length}");
-  print("ℹ️ Synthesis: Found ${todaysNotes.length} notes in last 24h.");
-
   if (todaysNotes.isEmpty) {
-    // If absolutely nothing in 24h, take the latest 5 regardless of time
-    print("ℹ️ Synthesis: Falling back to latest 5 notes overall.");
-    final fallbackNotes = notes.take(5).toList();
-    final thoughts = fallbackNotes.map((n) => n['content'] as String).toList();
-    return await AIService().generateDailyDigest(thoughts);
+    return null;
+  }
+  
+  // Sort notes for timeline/trend (oldest first for chart)
+  todaysNotes.sort((a, b) => 
+    DateTime.parse(a['created_at']).compareTo(DateTime.parse(b['created_at']))
+  );
+
+  // 3. Extract and Aggregate Data
+  final thoughts = todaysNotes.map((n) => n['content'] as String).toList();
+  
+  // Mood Trend
+  final moodTrend = todaysNotes.map((n) {
+    final sentiment = n['sentiment_score'] != null ? (n['sentiment_score'] as num).toDouble() : 0.0;
+    return MoodDataPoint(
+      time: DateTime.parse(n['created_at']).toLocal(),
+      sentiment: sentiment,
+      mood: n['mood'] as String?,
+    );
+  }).toList();
+
+  // Keyword frequency
+  final Map<String, int> keywordFreq = {};
+  for (final note in todaysNotes) {
+    final keywords = note['keywords'];
+    if (keywords is List) {
+      for (final k in keywords) {
+        final key = k.toString().toLowerCase();
+        keywordFreq[key] = (keywordFreq[key] ?? 0) + 1;
+      }
+    }
   }
 
-  // 3. Extract content
-  final thoughts = todaysNotes.map((n) => n['content'] as String).toList();
+  // Action Items collection
+  final List<String> allActions = [];
+  for (final note in todaysNotes) {
+    final actions = note['action_items'];
+    if (actions is List) {
+      allActions.addAll(actions.map((a) => a.toString()));
+    }
+  }
 
-  // 4. Generate Digest
-  return await AIService().generateDailyDigest(thoughts);
+  // Average Sentiment
+  final avgSentiment = moodTrend.isEmpty 
+      ? 0.0 
+      : moodTrend.map((m) => m.sentiment).reduce((a, b) => a + b) / moodTrend.length;
+
+  // 4. Generate AI Digest
+  final digest = await AIService().generateDailyDigest(thoughts);
+
+  return DailyInsight(
+    digest: digest,
+    moodTrend: moodTrend,
+    topKeywords: keywordFreq,
+    actionItems: allActions,
+    averageSentiment: avgSentiment,
+  );
 });

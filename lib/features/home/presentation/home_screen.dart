@@ -16,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notesAsync = ref.watch(notesStreamProvider);
+    final notesAsync = ref.watch(todaysNotesStreamProvider);
 
     // Logging for debugging
     notesAsync.when(
@@ -57,8 +57,8 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {}, 
-                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () => context.push('/settings'), 
+                    icon: const Icon(LucideIcons.settings),
                   ),
                 ],
               ),

@@ -14,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/auth/presentation/auth_providers.dart';
+import 'features/settings/presentation/settings_screen.dart';
 import 'features/insights/presentation/deep_insight_screen.dart';
 
 Future<void> main() async {
@@ -78,6 +79,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/deep-insight',
         builder: (context, state) => const DeepInsightScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );

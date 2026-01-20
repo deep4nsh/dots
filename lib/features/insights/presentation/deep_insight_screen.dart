@@ -1,3 +1,5 @@
+import 'package:dots_mobile/features/insights/domain/daily_insight.dart';
+import 'package:dots_mobile/features/insights/presentation/widgets/mood_trend_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -22,7 +24,7 @@ class DeepInsightScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          "Deep Insight",
+          "Today's Depth",
           style: TextStyle(
             color: AppColors.white,
             fontWeight: FontWeight.bold,
@@ -31,67 +33,225 @@ class DeepInsightScreen extends ConsumerWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: dailyInsightAsync.when(
-                  data: (insight) {
-                    if (insight == null) {
-                      return _buildEmptyState();
-                    }
-                    return _buildInsightContent(insight);
-                  },
-                  loading: () => _buildLoadingState(),
-                  error: (err, stack) => _buildErrorState(err.toString()),
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildActionButtons(context, ref),
-            ],
-          ),
+        child: dailyInsightAsync.when(
+          data: (insight) {
+            if (insight == null) {
+              return _buildEmptyState();
+            }
+            return _buildInsightContent(context, insight, ref);
+          },
+          loading: () => _buildLoadingState(),
+          error: (err, stack) => _buildErrorState(err.toString()),
         ),
       ),
     );
   }
 
-  Widget _buildInsightContent(String insight) {
+  Widget _buildInsightContent(BuildContext context, DailyInsight insight, WidgetRef ref) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            _buildSentimentHeader(insight.averageSentiment),
+            const SizedBox(height: 32),
+            _buildSectionTitle(LucideIcons.lineChart, "Mood Over Time"),
+            const SizedBox(height: 16),
+            MoodTrendChart(dataPoints: insight.moodTrend)
+                .animate()
+                .fadeIn(delay: 200.ms)
+                .slideY(begin: 0.1),
+            const SizedBox(height: 40),
+            _buildSectionTitle(LucideIcons.hash, "Core Topics"),
+            const SizedBox(height: 16),
+            _buildTopicCloud(insight.topKeywords),
+            const SizedBox(height: 40),
+            _buildSectionTitle(LucideIcons.sparkles, "AI Synthesis"),
+            const SizedBox(height: 16),
+            _buildDigestBox(insight.digest),
+            const SizedBox(height: 40),
+            if (insight.actionItems.isNotEmpty) ...[
+              _buildSectionTitle(LucideIcons.checkSquare, "Action Items"),
+              const SizedBox(height: 16),
+              _buildActionItems(insight.actionItems),
+              const SizedBox(height: 40),
+            ],
+            _buildActionButtons(context, ref),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.white.withOpacity(0.5), size: 18),
+        const SizedBox(width: 12),
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: AppColors.white.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ],
+    ).animate().fadeIn().slideX(begin: -0.05);
+  }
+
+  Widget _buildSentimentHeader(double average) {
+    final bool isPositive = average >= 0;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.white.withOpacity(0.05)),
+      ),
+      child: Row(
         children: [
-          Row(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isPositive ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isPositive ? LucideIcons.smile : LucideIcons.frown,
+              color: isPositive ? Colors.greenAccent : Colors.orangeAccent,
+              size: 32,
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Overall Vibe",
+                  style: TextStyle(color: AppColors.greyLight, fontSize: 13),
+                ),
+                Text(
+                  isPositive ? "Elevated & Positive" : "Quiet & Reflective",
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            "${(average.abs() * 100).toInt()}%",
+            style: TextStyle(
+              color: isPositive ? Colors.greenAccent : Colors.orangeAccent,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95));
+  }
+
+  Widget _buildTopicCloud(Map<String, int> keywords) {
+    if (keywords.isEmpty) return const SizedBox.shrink();
+    
+    // Sort by frequency
+    final sorted = keywords.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: sorted.take(12).map((entry) {
+        final double opacity = (entry.value / sorted.first.value).clamp(0.3, 1.0);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.white.withOpacity(0.05 * opacity),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppColors.white.withOpacity(0.1 * opacity)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.sparkles, color: AppColors.white, size: 24),
-              const SizedBox(width: 12),
               Text(
-                "Today's Patterns",
+                entry.key,
                 style: TextStyle(
-                  color: AppColors.white.withOpacity(0.6),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
+                  color: AppColors.white.withOpacity(opacity),
+                  fontWeight: entry.value > 1 ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              if (entry.value > 1) ...[
+                const SizedBox(width: 6),
+                Text(
+                  "x${entry.value}",
+                  style: TextStyle(color: AppColors.greyLight, fontSize: 10),
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    ).animate().fadeIn(delay: 400.ms);
+  }
+
+  Widget _buildDigestBox(String digest) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.white.withOpacity(0.05)),
+      ),
+      child: Text(
+        digest,
+        style: const TextStyle(
+          color: AppColors.white,
+          fontSize: 18,
+          height: 1.6,
+          fontWeight: FontWeight.w400,
+          letterSpacing: -0.2,
+        ),
+      ),
+    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.05);
+  }
+
+  Widget _buildActionItems(List<String> items) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.circle, color: AppColors.greyLight, size: 14),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  items[index],
+                  style: const TextStyle(color: AppColors.white, fontSize: 15),
                 ),
               ),
             ],
-          ).animate().fadeIn().slideX(begin: -0.1),
-          const SizedBox(height: 24),
-          Text(
-            insight,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 22,
-              height: 1.6,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -0.5,
-            ),
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.05),
-        ],
-      ),
-    );
+          ),
+        );
+      },
+    ).animate().fadeIn(delay: 800.ms);
   }
 
   Widget _buildLoadingState() {
@@ -102,7 +262,7 @@ class DeepInsightScreen extends ConsumerWidget {
           const CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
           const SizedBox(height: 24),
           Text(
-            "Connecting the dots...",
+            "Synthesizing your day...",
             style: TextStyle(color: AppColors.greyLight, fontSize: 16),
           ),
         ],
@@ -116,16 +276,16 @@ class DeepInsightScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(LucideIcons.cloudMoon, color: AppColors.greyMedium, size: 64),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            "The universe is quiet.",
+            "The data is still quiet.",
             style: TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            "No patterns found today yet.\nKeep dumping your thoughts.",
+            "Accumulate more thoughts today\nto unlock deep patterns.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.greyMedium, fontSize: 13),
+            style: TextStyle(color: AppColors.greyMedium, fontSize: 14),
           ),
         ],
       ),
@@ -142,7 +302,7 @@ class DeepInsightScreen extends ConsumerWidget {
             const Icon(LucideIcons.alertCircle, color: Colors.red, size: 40),
             const SizedBox(height: 16),
             Text(
-              "AI is having a moment.",
+              "Something went sideways.",
               style: TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -164,45 +324,27 @@ class DeepInsightScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: _InsightActionButton(
-                icon: LucideIcons.share2,
-                label: "Share",
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Sharing preview...")),
-                  );
-                },
+                icon: LucideIcons.refreshCw,
+                label: "Regenerate",
+                onPressed: () => ref.refresh(dailyInsightProvider),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: _InsightActionButton(
-                icon: LucideIcons.bookmark,
-                label: "Save",
+                icon: LucideIcons.share2,
+                label: "Share",
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Insight saved to your universe.")),
+                    const SnackBar(content: Text("Sharing reflection...")),
                   );
                 },
               ),
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton.icon(
-              onPressed: () => ref.refresh(dailyInsightProvider),
-              icon: const Icon(LucideIcons.refreshCw, size: 14, color: AppColors.greyLight),
-              label: const Text(
-                "Regenerate Insight",
-                style: TextStyle(color: AppColors.greyLight, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
       ],
-    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
+    ).animate().fadeIn(delay: 1.s);
   }
 }
 
@@ -223,14 +365,14 @@ class _InsightActionButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.white,
-        side: const BorderSide(color: AppColors.greyMedium),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: BorderSide(color: AppColors.white.withOpacity(0.1)),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
       icon: Icon(icon, size: 20),
-      label: Text(label),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }

@@ -37,7 +37,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please check your email for verification.')),
+          const SnackBar(content: Text('Registration successful! Welcome to dots.')),
         );
         context.go('/');
       }
