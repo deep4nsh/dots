@@ -9,6 +9,7 @@ import '../../insights/presentation/weekly_reflection_card.dart';
 import '../data/notes_provider.dart';
 import 'pulsing_dot_fab.dart';
 import 'timeline_dot.dart';
+import '../../dump/presentation/note_detail_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -112,8 +113,7 @@ class HomeScreen extends ConsumerWidget {
                           title: summary ?? content, // Prefer summary, fallback to content
                           subtitle: summary != null ? content : timeStr,
                           isLast: index == notes.length - 1,
-                          // Optional: Pass full note object to a Detail Screen
-                          openBuilder: _NoteDetailPlaceholder(content: content), 
+                          openBuilder: NoteDetailScreen(note: note), 
                         );
                       },
                     ).animate().slideX(begin: 0.1, delay: 200.ms);
@@ -156,18 +156,3 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _NoteDetailPlaceholder extends StatelessWidget {
-  final String content;
-  const _NoteDetailPlaceholder({required this.content});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Note Detail")),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Text(content, style: const TextStyle(fontSize: 18)),
-      ),
-    );
-  }
-}

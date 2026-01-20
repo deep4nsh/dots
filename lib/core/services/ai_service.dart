@@ -1,117 +1,105 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
   AIService._internal();
 
-  GenerativeModel? _model;
-  
-  // Initialize the model with API key
+  String? _apiKey;
+  static const String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  static const String _model = 'llama-3.3-70b-versatile';
+
+  // Initialize with API key from .env
   void init() {
-    final apiKey = dotenv.env['GOOGLE_GENERATIVE_AI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
-      print("⚠️ WARNING: GOOGLE_GENERATIVE_AI_API_KEY not found in .env");
-      return;
+    _apiKey = dotenv.env['GROQ_API_KEY'];
+    if (_apiKey == null || _apiKey!.isEmpty) {
+      print("⚠️ WARNING: GROQ_API_KEY not found in .env");
+    } else {
+      print("✅ AIService Initialized with Groq (Model: $_model)");
     }
-    
-    // Initialize with relaxed safety settings for a private journal
-    _model = GenerativeModel(
-      model: 'gemini-pro', 
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.7, 
-        responseMimeType: 'application/json',
-      ),
-      safetySettings: [
-        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
-        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
-        SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
-        SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
-      ],
-    );
-    print("✅ AIService Initialized with model: gemini-pro (Safety relaxed)");
   }
 
-  // Analyze a raw thought using Gemini
+  // Analyze a raw thought using Groq
   Future<Map<String, dynamic>?> analyzeThought(String thought) async {
-    if (_model == null) {
-      print("❌ AIService: Model not initialized.");
+    if (_apiKey == null) {
+      print("❌ AIService: API Key not initialized.");
       return null;
     }
 
     if (thought.trim().isEmpty) return null;
 
-    print("🧠 AIService: Analyzing thought: '$thought'");
-
-    // Define Schema for structured JSON output
-    final responseSchema = Schema.object(
-      properties: {
-        'mood': Schema.string(description: 'The inferred mood of the user'),
-        'summary': Schema.string(description: 'A concise 1-sentence summary'),
-        'action_items': Schema.array(items: Schema.string(description: 'Actionable steps')),
-        'keywords': Schema.array(items: Schema.string(description: '3-5 key topics')),
-      },
-      requiredProperties: ['mood', 'summary', 'action_items', 'keywords'],
-    );
+    print("🧠 AIService (Groq): Analyzing thought: '$thought'");
 
     final prompt = '''
-    Analyze the following user thought for a minimalist journal.
-    Extract the mood, a summary, action items (to-dos), and key topics.
-    
+    Deeply analyze the following user thought for a minimalist psychological journal.
+    Extract the following minute details to help find real, non-generic patterns:
+
+    - mood: The core emotion.
+    - summary: 1 concise sentence.
+    - emotional_intensity: Scale of 1-10.
+    - subconscious_drivers: The "why" behind the thought (e.g., perfectionism, fear of loss, need for validation).
+    - cognitive_distortions: List types if present (e.g., All-or-Nothing, Overgeneralization, Mind Reading).
+    - core_values: What values are being honored or violated (e.g., Freedom, Integrity, Security).
+    - impact_areas: Which life areas (e.g., Career, Health, Relationships).
+    - sentiment_score: -1.0 to 1.0.
+    - reflection_question: A deep, personalized follow-up for the user.
+    - keywords: 3-5 key topics.
+
     User Thought: "$thought"
+
+    Respond ONLY with a JSON object in this format:
+    {
+      "mood": "string",
+      "summary": "string",
+      "emotional_intensity": integer,
+      "subconscious_drivers": "string",
+      "cognitive_distortions": ["string"],
+      "core_values": ["string"],
+      "impact_areas": ["string"],
+      "sentiment_score": float,
+      "reflection_question": "string",
+      "action_items": ["string"],
+      "keywords": ["string"]
+    }
     ''';
 
     try {
-      final content = [Content.text(prompt)];
-      
-      final response = await _model!.generateContent(
-        content,
-        generationConfig: GenerationConfig(
-          responseMimeType: 'application/json',
-          responseSchema: responseSchema,
-          temperature: 0.4, 
-        ),
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': _model,
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'You are a helpful assistant that outputs structured JSON journal metadata.'
+            },
+            {'role': 'user', 'content': prompt}
+          ],
+          'response_format': {'type': 'json_object'},
+          'temperature': 0.1, // Low temperature for consistent extraction
+        }),
       );
-      
-      // Log safety candidate if available
-      if (response.candidates.isNotEmpty) {
-        final finishReason = response.candidates.first.finishReason;
-        if (finishReason != null && finishReason != FinishReason.stop) {
-          print("⚠️ AIService: Content blocked or unfinished. Reason: $finishReason");
-        }
-      }
 
-      final responseText = response.text;
-      print("🧠 AIService: Raw response: $responseText");
-
-      if (responseText == null || responseText.isEmpty) {
-        print("⚠️ AIService: Gemini returned null or empty text.");
+      if (response.statusCode != 200) {
+        print("❌ Groq API Error: ${response.statusCode} - ${response.body}");
         return null;
       }
 
-      // Sanitize response: Remove Markdown code blocks if present
-      String cleanText = responseText;
-      if (cleanText.contains('```json')) {
-        cleanText = cleanText.replaceAll('```json', '').replaceAll('```', '');
-      } else if (cleanText.contains('```')) {
-        cleanText = cleanText.replaceAll('```', '');
-      }
+      final data = jsonDecode(response.body);
+      final String content = data['choices'][0]['message']['content'];
       
-      cleanText = cleanText.trim();
+      print("🧠 AIService: Raw response content: $content");
 
-      try {
-        final Map<String, dynamic> decoded = jsonDecode(cleanText);
-        print("✅ AIService: Successfully decoded JSON: $decoded");
-        return decoded;
-      } catch (e) {
-        print("❌ AIService JSON Decode Error: $e");
-        print("❌ Failed raw text: $cleanText");
-        return null;
-      }
-    } catch (e, stack) {
+      final Map<String, dynamic> decoded = jsonDecode(content);
+      print("✅ AIService: Decoded JSON success: $decoded");
+      return decoded;
+    } catch (e) {
       print("❌ AIService analyzeThought Error: $e");
       return null;
     }
@@ -119,16 +107,13 @@ class AIService {
 
   // Synthesize multiple thoughts into a coherent Daily Digest
   Future<String?> generateDailyDigest(List<String> thoughts) async {
-    if (_model == null) {
-      print("❌ AIService: Model is null.");
+    if (_apiKey == null) {
+      print("❌ AIService: API Key not initialized.");
       return null;
     }
-    if (thoughts.isEmpty) {
-      print("ℹ️ AIService: No thoughts to synthesize.");
-      return null;
-    }
+    if (thoughts.isEmpty) return null;
 
-    print("🧠 AIService: Synthesizing ${thoughts.length} thoughts...");
+    print("🧠 AIService (Groq): Synthesizing ${thoughts.length} thoughts...");
     
     final thoughtsList = thoughts.map((t) => "- $t").join("\n");
     
@@ -143,34 +128,37 @@ class AIService {
     2. Synthesize these into a single, cohesive "Daily Insight".
     3. Keep it to 1-2 paragraphs max, high-quality, and reflective. 
     4. Focus on "connecting the dots" between scattered ideas.
-
-    Return the insight as PLAIN TEXT.
     ''';
 
     try {
-      final content = [Content.text(prompt)];
-      final response = await _model!.generateContent(
-        content,
-        generationConfig: GenerationConfig(
-          responseMimeType: 'text/plain',
-          temperature: 0.7,
-        ),
-        safetySettings: [
-          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
-          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
-          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
-          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
-        ],
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': _model,
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'You are a thoughtful observer who finds patterns in scattered ideas.'
+            },
+            {'role': 'user', 'content': prompt}
+          ],
+          'temperature': 0.7,
+        }),
       );
-      
-      final text = response.text;
-      if (text == null || text.isEmpty) {
-        print("⚠️ AIService: Gemini returned empty text.");
+
+      if (response.statusCode != 200) {
+        print("❌ Groq API Error: ${response.statusCode} - ${response.body}");
         return null;
       }
-      return text;
-    } catch (e, stack) {
-      print("❌ AIService Error: $e");
+
+      final data = jsonDecode(response.body);
+      return data['choices'][0]['message']['content'] as String;
+    } catch (e) {
+      print("❌ AIService generateDailyDigest Error: $e");
       return null;
     }
   }

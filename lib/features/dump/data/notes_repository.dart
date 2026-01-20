@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 class NotesRepository {
   final _client = Supabase.instance.client;
@@ -10,6 +11,16 @@ class NotesRepository {
     String? summary,
     List<String>? keywords,
     List<String>? actionItems,
+    int? emotionalIntensity,
+    String? subconsciousDrivers,
+    List<String>? cognitiveDistortions,
+    List<String>? coreValues,
+    List<String>? impactAreas,
+    double? sentimentScore,
+    String? reflectionQuestion,
+    String? voiceUrl,
+    String? imageUrl,
+    String? linkUrl,
   }) async {
     try {
       final payload = {
@@ -18,6 +29,16 @@ class NotesRepository {
         'summary': summary,
         'keywords': keywords,
         'action_items': actionItems,
+        'emotional_intensity': emotionalIntensity,
+        'subconscious_drivers': subconsciousDrivers,
+        'cognitive_distortions': cognitiveDistortions,
+        'core_values': coreValues,
+        'impact_areas': impactAreas,
+        'sentiment_score': sentimentScore,
+        'reflection_question': reflectionQuestion,
+        'voice_url': voiceUrl,
+        'image_url': imageUrl,
+        'link_url': linkUrl,
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
       print("📤 Saving to Supabase Payload: $payload");
@@ -26,6 +47,23 @@ class NotesRepository {
     } catch (e) {
       print("❌ Error saving note: $e");
       rethrow;
+    }
+  }
+
+  // Upload a file to Supabase Storage
+  Future<String?> uploadFile(String filePath, String bucket) async {
+    try {
+      final file = File(filePath);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${filePath.split('/').last}';
+      
+      await _client.storage.from(bucket).upload(fileName, file);
+      
+      final String publicUrl = _client.storage.from(bucket).getPublicUrl(fileName);
+      print("✅ File uploaded to $bucket: $publicUrl");
+      return publicUrl;
+    } catch (e) {
+      print("❌ Error uploading file: $e");
+      return null;
     }
   }
 

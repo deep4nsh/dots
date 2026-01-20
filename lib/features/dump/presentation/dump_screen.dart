@@ -7,6 +7,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../application/dump_controller.dart';
 import 'package:dots_mobile/core/constants/dump_prompts.dart';
 import 'package:dots_mobile/core/presentation/widgets/aesthetic_dots_background.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class DumpScreen extends ConsumerStatefulWidget {
   const DumpScreen({super.key});
@@ -18,11 +22,91 @@ class DumpScreen extends ConsumerStatefulWidget {
 class _DumpScreenState extends ConsumerState<DumpScreen> {
   final TextEditingController _controller = TextEditingController();
   late String _randomPrompt;
+  
+  // Multimedia State
+  String? _imagePath;
+  String? _voicePath;
+  String? _linkUrl;
+  
+  final AudioRecorder _recorder = AudioRecorder();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _randomPrompt = DumpPrompts.getRandom();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _recorder.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _imagePath = image.path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image attached')),
+      );
+    }
+  }
+
+  Future<void> _handleScan() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      setState(() => _imagePath = image.path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Scan attached')),
+      );
+    }
+  }
+
+  Future<void> _handleVoice() async {
+    if (await _recorder.isRecording()) {
+      final path = await _recorder.stop();
+      setState(() => _voicePath = path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Voice recording attached')),
+      );
+    } else {
+      if (await _recorder.hasPermission()) {
+        final directory = await getApplicationDocumentsDirectory();
+        final path = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        await _recorder.start(const RecordConfig(), path: path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Recording started... Tap again to stop')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleLink() async {
+    final textController = TextEditingController();
+    final link = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Link'),
+        content: TextField(
+          controller: textController,
+          decoration: const InputDecoration(hintText: 'https://...'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, textController.text),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (link != null && link.isNotEmpty) {
+      setState(() => _linkUrl = link);
+    }
   }
 
   @override
@@ -55,7 +139,12 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
 
               return TextButton.icon(
                 onPressed: isLoading ? null : () async {
-                   await ref.read(dumpControllerProvider.notifier).saveDump(_controller.text);
+                   await ref.read(dumpControllerProvider.notifier).saveDump(
+                     _controller.text,
+                     voicePath: _voicePath,
+                     imagePath: _imagePath,
+                     linkUrl: _linkUrl,
+                   );
                    if (context.mounted) context.pop(); 
                 },
                 icon: isLoading 
@@ -141,6 +230,48 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 ),
                 
+                // Attachment Preview
+                if (_imagePath != null || _voicePath != null || _linkUrl != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_imagePath != null) ...[
+                        const Icon(LucideIcons.image, size: 14, color: Colors.blue),
+                        const SizedBox(width: 4),
+                        const Text("Image", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                      ],
+                      if (_voicePath != null) ...[
+                        const Icon(LucideIcons.mic, size: 14, color: Colors.red),
+                        const SizedBox(width: 4),
+                        const Text("Voice", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                      ],
+                      if (_linkUrl != null) ...[
+                        const Icon(LucideIcons.link, size: 14, color: Colors.green),
+                        const SizedBox(width: 4),
+                        const Text("Link", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() {
+                          _imagePath = null;
+                          _voicePath = null;
+                          _linkUrl = null;
+                        }),
+                        child: const Icon(LucideIcons.x, size: 14, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn().scale(),
+
                 // Toolbar
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -152,10 +283,26 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      const _ToolbarItem(icon: LucideIcons.mic, label: "Voice"),
-                      const _ToolbarItem(icon: LucideIcons.image, label: "Image"),
-                      const _ToolbarItem(icon: LucideIcons.scanLine, label: "Scan"),
-                      const _ToolbarItem(icon: LucideIcons.link, label: "Link"),
+                      _ToolbarItem(
+                        icon: LucideIcons.mic, 
+                        label: "Voice",
+                        onPressed: () => _handleVoice(),
+                      ),
+                      _ToolbarItem(
+                        icon: LucideIcons.image, 
+                        label: "Image",
+                        onPressed: () => _handleImage(),
+                      ),
+                      _ToolbarItem(
+                        icon: LucideIcons.scanLine, 
+                        label: "Scan",
+                        onPressed: () => _handleScan(),
+                      ),
+                      _ToolbarItem(
+                        icon: LucideIcons.link, 
+                        label: "Link",
+                        onPressed: () => _handleLink(),
+                      ),
                     ],
                   ),
                 ).animate().fadeIn(delay: 800.ms).slideY(begin: 1, end: 0, curve: Curves.easeOutQuad),
@@ -171,27 +318,36 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
 class _ToolbarItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback onPressed;
 
-  const _ToolbarItem({required this.icon, required this.label});
+  const _ToolbarItem({
+    required this.icon, 
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.black54),
-          const SizedBox(height: 4),
-          Text(
-            label, 
-            style: const TextStyle(
-              fontSize: 10, 
-              fontWeight: FontWeight.w600,
-              color: Colors.black54
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.black54, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label, 
+              style: const TextStyle(
+                fontSize: 10, 
+                fontWeight: FontWeight.w600,
+                color: Colors.black54
+              ),
             ),
-          ).animate(onPlay: (controller) => controller.repeat()).fadeIn(duration: 600.ms), // Fixed usage of animate
-        ],
+          ],
+        ),
       ),
     );
   }
