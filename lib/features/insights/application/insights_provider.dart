@@ -70,7 +70,7 @@ final dailyInsightProvider = FutureProvider<DailyInsight?>((ref) async {
       : moodTrend.map((m) => m.sentiment).reduce((a, b) => a + b) / moodTrend.length;
 
   // 4. Generate AI Digest
-  final digest = await AIService().generateDailyDigest(thoughts);
+  final digest = await AIService().generateDailyDigest(thoughts) ?? "No patterns could be distilled from today's thoughts.";
 
   return DailyInsight(
     digest: digest,

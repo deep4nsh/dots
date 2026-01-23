@@ -54,13 +54,17 @@ class AuthRepository {
   // Get current user
   User? get currentUser => _client.auth.currentUser;
 
-  // Delete Account (Wipe data and sign out)
+  // Delete Account (Wipe data and delete from Auth)
   Future<void> deleteAccount() async {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId != null) {
-        // Wipe user notes
+        // 1. Wipe user notes (though the SQL function could also handle this, manually doing it for clarity)
         await _client.from('notes').delete().eq('user_id', userId);
+        
+        // 2. Call the RPC function to delete the user from auth.users
+        // This requires the SQL function to be created in Supabase first.
+        await _client.rpc('delete_user');
       }
       // Sign out
       await signOut();

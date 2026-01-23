@@ -344,7 +344,7 @@ class DeepInsightScreen extends ConsumerWidget {
           ],
         ),
       ],
-    ).animate().fadeIn(delay: 1.s);
+    ).animate().fadeIn(delay: 1000.ms);
   }
 }
 

@@ -35,5 +35,13 @@ class SupabaseService {
   -- Create policy to allow users to see only their own notes
   CREATE POLICY "Users can only access their own notes" ON notes
   FOR ALL USING (auth.uid() = user_id);
+
+  -- Function to allow users to delete their own account
+  CREATE OR REPLACE FUNCTION delete_user()
+  RETURNS void AS $$
+  BEGIN
+    DELETE FROM auth.users WHERE id = auth.uid();
+  END;
+  $$ LANGUAGE plpgsql SECURITY DEFINER;
   */
 }
