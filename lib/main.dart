@@ -15,7 +15,10 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/auth/presentation/auth_providers.dart';
 import 'features/settings/presentation/settings_screen.dart';
+import 'features/settings/presentation/settings_screen.dart';
 import 'features/insights/presentation/deep_insight_screen.dart';
+import 'features/dump/data/import_service.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,7 +77,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/dump',
-        builder: (context, state) => const DumpScreen(),
+        builder: (context, state) => DumpScreen(initialData: state.extra as Map<String, dynamic>?),
       ),
       GoRoute(
         path: '/deep-insight',
@@ -88,11 +91,61 @@ final _routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for share intents
+    ImportService().listenForShareIntent(context, (noteData) {
+       _handleSharedNote(noteData);
+    });
+  }
+
+  void _handleSharedNote(Map<String, dynamic> noteData) {
+    // We need to navigate to DumpScreen or NoteDetail with this data
+    // Since we are outside the router's context build tree (in initState), 
+    // we should wait for the router to be ready or use the router provider if possible.
+    // However, GoRouter is provided via Riverpod.
+    
+    // Simplest way: Navigate using the router ref once available or 
+    // better, just use the router config if we can access it.
+    // But `ref.read(_routerProvider)` is safe here? No, initState is too early for context dependent watch?
+    // Actually ref.read is fine in callbacks.
+    
+    // Let's defer navigation slightly to ensure app is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+       final router = ref.read(_routerProvider);
+       // Passing data as extra or query params
+       // For now, let's go to /dump and maybe pass arguments? 
+       // Or go to a specific "create note" route.
+       // NoteDetailScreen handles creation if id is new.
+       // Let's assume we want to open the DumpScreen (which has the list) 
+       // or better, open a new note dialog/screen.
+       // Existing DumpScreen seems to list notes. 
+       // NoteDetailScreen is likely for editing/creating.
+       
+       // Let's inspect NoteDetailScreen later. For now, let's navigate to /dump 
+       // and maybe we can trigger a "new note" action there?
+       // Or better, let's try to verify if we can pass extra data to NoteDetailScreen.
+       
+       // Assuming we can pass data to a route, let's print for now 
+       // and we will refine the route in the next step when we see NoteDetail.
+       
+       print("Received shared note: $noteData");
+       router.push('/dump', extra: noteData); // Passing as extra to DumpScreen
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(_routerProvider);
     return MaterialApp.router(
       title: 'dots',

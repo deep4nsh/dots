@@ -14,7 +14,9 @@ import 'dart:io';
 import 'dart:async';
 
 class DumpScreen extends ConsumerStatefulWidget {
-  const DumpScreen({super.key});
+  final Map<String, dynamic>? initialData;
+  
+  const DumpScreen({super.key, this.initialData});
 
   @override
   ConsumerState<DumpScreen> createState() => _DumpScreenState();
@@ -43,6 +45,17 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   void initState() {
     super.initState();
     _randomPrompt = DumpPrompts.getRandom();
+    
+    if (widget.initialData != null) {
+      final data = widget.initialData!;
+      if (data.containsKey('content')) {
+        _controller.text = data['content'] as String;
+      }
+      if (data.containsKey('image_url')) {
+        _imagePath = data['image_url'] as String?;
+      }
+      // Add other fields processing if needed
+    }
   }
 
   @override

@@ -53,6 +53,9 @@ dependencies:
   any_link_preview: ^3.0.1
   shared_preferences: ^2.5.4
   fl_chart: ^1.1.1
+  receive_sharing_intent: ^1.4.5
+  file_picker: ^6.1.1
+
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

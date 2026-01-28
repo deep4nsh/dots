@@ -8,6 +8,8 @@ import '../../auth/presentation/auth_providers.dart';
 import '../../home/data/notes_provider.dart';
 import '../../dump/presentation/note_detail_screen.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../dump/data/import_service.dart';
+
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -32,7 +34,11 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(height: 48),
                   _buildHistorySection(context, notesAsync),
                   const SizedBox(height: 48),
+                  _buildImportSection(context),
+                  const SizedBox(height: 48),
+
                   _buildAccountActions(context, ref),
+
                   const SizedBox(height: 100), // Spacing for bottom
                 ],
               ),
@@ -191,6 +197,43 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ],
     ).animate().fadeIn(delay: 200.ms);
+  }
+
+    ).animate().fadeIn(delay: 200.ms);
+  }
+
+
+  Widget _buildImportSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Import',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildActionButton(
+          label: 'Import from File (JSON/Text)',
+          icon: LucideIcons.import,
+          color: Colors.blue.withOpacity(0.1),
+          textColor: Colors.blueAccent,
+          onTap: () async {
+            await ImportService().importFromFile();
+            // Optionally show success message or refresh
+            if (context.mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Import process completed (check logs for details)')),
+              );
+            }
+          },
+        ),
+      ],
+    ).animate().fadeIn(delay: 300.ms);
   }
 
   Widget _buildAccountActions(BuildContext context, WidgetRef ref) {
