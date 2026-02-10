@@ -199,8 +199,7 @@ class SettingsScreen extends ConsumerWidget {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-    ).animate().fadeIn(delay: 200.ms);
-  }
+
 
 
   Widget _buildImportSection(BuildContext context) {
