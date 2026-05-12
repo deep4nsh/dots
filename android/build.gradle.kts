@@ -18,27 +18,27 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 
-// 3. Force Configuration on Subprojects
 subprojects {
-    // We use afterEvaluate to ensure we override any settings applied by the plugins or their build scripts
     afterEvaluate {
-        // Only apply to Android projects
-        if (project.plugins.hasPlugin("com.android.application") || 
-            project.plugins.hasPlugin("com.android.library") || 
-            project.plugins.hasPlugin("com.android.base")) {
-            
-            // Force JavaCompile tasks (overrides android.compileOptions)
-            tasks.withType<JavaCompile>().configureEach {
-                sourceCompatibility = JavaVersion.VERSION_17.toString()
-                targetCompatibility = JavaVersion.VERSION_17.toString()
+        if (project.hasProperty("android")) {
+            val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+            android.compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
             }
-            
-            // Force Kotlin compile tasks
-            tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                compilerOptions {
-                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            if (project.plugins.hasPlugin("kotlin-android")) {
+                tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                    compilerOptions {
+                        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                    }
                 }
             }
+        }
+        
+        // Fallback for any Java compile task
+        tasks.withType<JavaCompile>().configureEach {
+            sourceCompatibility = JavaVersion.VERSION_17.toString()
+            targetCompatibility = JavaVersion.VERSION_17.toString()
         }
     }
 }
