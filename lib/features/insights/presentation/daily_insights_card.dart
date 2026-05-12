@@ -48,7 +48,7 @@ class DailyInsightsCard extends ConsumerWidget {
                 if (insight == null) {
                   return _buildEmptyState();
                 }
-                return _buildInsightContent(insight);
+                return _buildInsightContent(insight.digest);
               },
               loading: () => _buildLoadingState(),
               error: (err, stack) => _buildErrorState(err.toString()),
@@ -100,7 +100,7 @@ class DailyInsightsCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,
-                    color: AppColors.white.withOpacity(0.8),
+                    color: AppColors.white.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -142,7 +142,7 @@ class DailyInsightsCard extends ConsumerWidget {
       "Couldn't connect the dots right now.",
       style: TextStyle(
         fontSize: 13,
-        color: Colors.red.withOpacity(0.7),
+        color: Colors.red.withValues(alpha: 0.7),
       ),
     );
   }

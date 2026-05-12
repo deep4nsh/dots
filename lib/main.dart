@@ -13,8 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
-import 'features/auth/presentation/auth_providers.dart';
-import 'features/settings/presentation/settings_screen.dart';
 import 'features/settings/presentation/settings_screen.dart';
 import 'features/insights/presentation/deep_insight_screen.dart';
 import 'features/dump/data/import_service.dart';
@@ -32,7 +30,6 @@ Future<void> main() async {
 }
 
 final _routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
   
   return GoRouter(
     initialLocation: '/splash',
@@ -139,7 +136,7 @@ class _MyAppState extends ConsumerState<MyApp> {
        // Assuming we can pass data to a route, let's print for now 
        // and we will refine the route in the next step when we see NoteDetail.
        
-       print("Received shared note: $noteData");
+
        router.push('/dump', extra: noteData); // Passing as extra to DumpScreen
     });
   }

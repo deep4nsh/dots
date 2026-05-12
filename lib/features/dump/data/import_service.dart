@@ -3,12 +3,10 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'notes_repository.dart';
 
 class ImportService {
   final NotesRepository _notesRepository = NotesRepository();
-  final SupabaseClient _client = Supabase.instance.client;
 
   // Singleton pattern
   static final ImportService _instance = ImportService._internal();
@@ -21,7 +19,7 @@ class ImportService {
     ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
       _processSharedMedia(value, onNoteReceived);
     }, onError: (err) {
-      print("getIntentDataStream error: $err");
+      // debugPrint("getIntentDataStream error: $err");
     });
 
     // For sharing or opening urls/text coming from outside the app while the app is closed
@@ -38,7 +36,6 @@ class ImportService {
     final file = files.first;
     String content = "";
     String? imageUrl;
-    String? voiceUrl; // Not typically shared via "Send" intent as primary but possible
 
     if (file.type == SharedMediaType.text) {
         content = file.path; // For text, path contains the text
@@ -82,7 +79,7 @@ class ImportService {
         }
       }
     } catch (e) {
-      print("Error importing file: $e");
+      // debugPrint("Error importing file: $e");
     }
   }
 
@@ -102,7 +99,7 @@ class ImportService {
         }
       }
     } catch (e) {
-      print("Error parsing JSON: $e");
+      // debugPrint("Error parsing JSON: $e");
     }
   }
 

@@ -30,7 +30,7 @@ class PulsingDotFAB extends StatelessWidget {
               color: AppColors.white,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.white.withOpacity(0.3),
+                  color: AppColors.white.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 2,
                 )
@@ -51,8 +51,8 @@ class PulsingDotFAB extends StatelessWidget {
           .scaleXY(begin: 1.0, end: 1.1, duration: 1200.ms, curve: Curves.easeInOut)
           .then()
           .boxShadow(
-             begin: BoxShadow(color: AppColors.white.withOpacity(0.3), blurRadius: 20, spreadRadius: 2),
-             end: BoxShadow(color: AppColors.white.withOpacity(0.6), blurRadius: 30, spreadRadius: 8),
+             begin: BoxShadow(color: AppColors.white.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2),
+             end: BoxShadow(color: AppColors.white.withValues(alpha: 0.6), blurRadius: 30, spreadRadius: 8),
              duration: 1200.ms,
           ),
         );

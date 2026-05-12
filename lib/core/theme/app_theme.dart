@@ -13,8 +13,6 @@ class AppTheme {
         onPrimary: AppColors.black,
         surface: AppColors.surface,
         onSurface: AppColors.white,
-        background: AppColors.background,
-        onBackground: AppColors.white,
         outline: AppColors.greyMedium,
       ),
       
@@ -61,8 +59,8 @@ class AppTheme {
       
       // Interaction Patterns
       splashFactory: InkRipple.splashFactory, // Fluid "Water Drop" Ripple
-      highlightColor: Colors.white.withOpacity(0.1), // Subtle white highlight
-      splashColor: Colors.white.withOpacity(0.1), // Subtle white splash
+      highlightColor: Colors.white.withValues(alpha: 0.1), // Subtle white highlight
+      splashColor: Colors.white.withValues(alpha: 0.1), // Subtle white splash
     );
   }
 }

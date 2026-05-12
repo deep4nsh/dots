@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -27,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4), // Total animation time
+      duration: const Duration(milliseconds: 1500), // Total animation time
     );
 
     // 1. Line Drawing Progress (0.0 to 1.0)
@@ -197,7 +196,7 @@ class _SplashPainter extends CustomPainter {
       // Fade in text
       textPainter.text = TextSpan(
         text: 'dots',
-        style: textStyle.copyWith(color: Colors.white.withOpacity(textOpacity)),
+        style: textStyle.copyWith(color: Colors.white.withValues(alpha: textOpacity)),
       );
       textPainter.layout();
       textPainter.paint(canvas, textOffset);

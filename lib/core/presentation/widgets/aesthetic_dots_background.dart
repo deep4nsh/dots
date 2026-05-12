@@ -70,7 +70,7 @@ class _DotsPainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
 
     for (final dot in dots) {
-      paint.color = color.withOpacity(dot.opacity);
+      paint.color = color.withValues(alpha: dot.opacity);
       canvas.drawCircle(
         Offset(dot.x * size.width, dot.y * size.height),
         dot.size,

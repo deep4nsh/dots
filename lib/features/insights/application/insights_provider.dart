@@ -17,8 +17,8 @@ final dailyInsightProvider = FutureProvider<DailyInsight?>((ref) async {
   final last24Hours = now.subtract(const Duration(hours: 24)).toUtc();
   
   final todaysNotes = notes.where((n) {
-    final createdAt = DateTime.parse(n['created_at']).toUtc();
-    return createdAt.isAfter(last24Hours);
+    final createdAt = DateTime.tryParse(n['created_at'] ?? '')?.toUtc();
+    return createdAt != null && createdAt.isAfter(last24Hours);
   }).toList();
 
   if (todaysNotes.isEmpty) {
@@ -37,7 +37,7 @@ final dailyInsightProvider = FutureProvider<DailyInsight?>((ref) async {
   final moodTrend = todaysNotes.map((n) {
     final sentiment = n['sentiment_score'] != null ? (n['sentiment_score'] as num).toDouble() : 0.0;
     return MoodDataPoint(
-      time: DateTime.parse(n['created_at']).toLocal(),
+      time: DateTime.tryParse(n['created_at'] ?? '')?.toLocal() ?? DateTime.now(),
       sentiment: sentiment,
       mood: n['mood'] as String?,
     );
@@ -70,7 +70,9 @@ final dailyInsightProvider = FutureProvider<DailyInsight?>((ref) async {
       : moodTrend.map((m) => m.sentiment).reduce((a, b) => a + b) / moodTrend.length;
 
   // 4. Generate AI Digest
-  final digest = await AIService().generateDailyDigest(thoughts) ?? "No patterns could be distilled from today's thoughts.";
+  // Note: This still runs on every stream update, but uses the provider now.
+  final digest = await ref.read(aiServiceProvider).generateDailyDigest(thoughts) 
+      ?? "No patterns could be distilled from today's thoughts.";
 
   return DailyInsight(
     digest: digest,

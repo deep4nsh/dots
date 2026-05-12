@@ -16,7 +16,7 @@ class AuthRepository {
       );
       return response;
     } catch (e) {
-      print("❌ Error during sign up: $e");
+      // debugPrint("❌ Error during sign up: $e");
       rethrow;
     }
   }
@@ -33,7 +33,7 @@ class AuthRepository {
       );
       return response;
     } catch (e) {
-      print("❌ Error during sign in: $e");
+      // debugPrint("❌ Error during sign in: $e");
       rethrow;
     }
   }
@@ -43,7 +43,7 @@ class AuthRepository {
     try {
       await _client.auth.signOut();
     } catch (e) {
-      print("❌ Error during sign out: $e");
+      // debugPrint("❌ Error during sign out: $e");
       rethrow;
     }
   }
@@ -69,7 +69,7 @@ class AuthRepository {
       // Sign out
       await signOut();
     } catch (e) {
-      print("❌ Error during account deletion: $e");
+      // debugPrint("❌ Error during account deletion: $e");
       rethrow;
     }
   }

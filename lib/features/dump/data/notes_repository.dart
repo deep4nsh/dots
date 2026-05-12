@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 
@@ -44,11 +45,11 @@ class NotesRepository {
         'user_id': _client.auth.currentUser?.id,
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
-      print("📤 Saving to Supabase Payload: $payload");
+      // debugPrint("📤 Saving to Supabase Payload: $payload");
       await _client.from('notes').insert(payload);
-      print("✅ Note saved to Supabase");
+      // debugPrint("✅ Note saved to Supabase");
     } catch (e) {
-      print("❌ Error saving note: $e");
+      // debugPrint("❌ Error saving note: $e");
       rethrow;
     }
   }
@@ -62,17 +63,17 @@ class NotesRepository {
       await _client.storage.from(bucket).upload(fileName, file);
       
       final String publicUrl = _client.storage.from(bucket).getPublicUrl(fileName);
-      print("✅ File uploaded to $bucket: $publicUrl");
+      // debugPrint("✅ File uploaded to $bucket: $publicUrl");
       return publicUrl;
     } catch (e) {
-      print("❌ Error uploading file: $e");
+      // debugPrint("❌ Error uploading file: $e");
       return null;
     }
   }
 
   // Get real-time stream of notes
   Stream<List<Map<String, dynamic>>> getNotesStream() {
-    print("📡 NotesRepository: Initializing stream for 'notes' table...");
+    // debugPrint("📡 NotesRepository: Initializing stream for 'notes' table...");
     final userId = _client.auth.currentUser?.id;
     return _client
         .from('notes')
@@ -81,9 +82,9 @@ class NotesRepository {
         .order('created_at', ascending: false)
         .limit(50)
         .map((data) {
-          print("📡 NotesRepository: Stream received ${data.length} notes");
+          // debugPrint("📡 NotesRepository: Stream received ${data.length} notes");
           if (data.isNotEmpty) {
-            print("📡 NotesRepository: First note preview: ${data.first['content']}");
+            // debugPrint("📡 NotesRepository: First note preview: ${data.first['content']}");
           }
           return List<Map<String, dynamic>>.from(data);
         });
@@ -105,7 +106,7 @@ class NotesRepository {
       
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      print("❌ Error fetching today's notes: $e");
+      // debugPrint("❌ Error fetching today's notes: $e");
       return [];
     }
   }
@@ -113,13 +114,15 @@ class NotesRepository {
   // Simple fetch for testing connectivity
   Future<List<Map<String, dynamic>>> testFetch() async {
     try {
-      print("🧪 NotesRepository: Running testFetch()...");
+      // debugPrint("🧪 NotesRepository: Running testFetch()...");
       final response = await _client.from('notes').select().limit(10);
-      print("🧪 NotesRepository: testFetch found ${response.length} items");
+      // debugPrint("🧪 NotesRepository: testFetch found ${response.length} items");
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      print("❌ NotesRepository: testFetch FAILED: $e");
+      // debugPrint("❌ NotesRepository: testFetch FAILED: $e");
       return [];
     }
   }
 }
+
+final notesRepositoryProvider = Provider((ref) => NotesRepository());

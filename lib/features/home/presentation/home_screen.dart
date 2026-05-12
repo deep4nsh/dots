@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../insights/presentation/weekly_reflection_card.dart';
 import '../data/notes_provider.dart';
 import 'pulsing_dot_fab.dart';
 import 'timeline_dot.dart';
@@ -17,25 +16,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(todaysNotesStreamProvider);
-
-    // Logging for debugging
-    notesAsync.when(
-      data: (notes) => print("📊 HomeScreen: Received ${notes.length} notes via Stream"),
-      loading: () => print("📊 HomeScreen: Loading notes via Stream..."),
-      error: (err, stack) => print("📊 HomeScreen: Error loading notes via Stream: $err"),
-    );
-
-    // One-time fetch to verify connectivity
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-       try {
-         final repository = ref.read(notesRepositoryProvider);
-         print("🧪 Debug: Attempting manual one-time fetch...");
-         final notes = await repository.testFetch();
-         print("🧪 Debug: Manual fetch found ${notes.length} notes total");
-       } catch (e) {
-         print("🧪 Debug: Manual fetch FAILED: $e");
-       }
-    });
 
     return Scaffold(
       body: SafeArea(

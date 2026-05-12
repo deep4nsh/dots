@@ -10,7 +10,6 @@ import 'package:dots_mobile/core/presentation/widgets/aesthetic_dots_background.
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'dart:async';
 
 class DumpScreen extends ConsumerStatefulWidget {
@@ -38,7 +37,6 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   // Recording Visuals State
   bool _isRecording = false;
   StreamSubscription<Amplitude>? _amplitudeSubscription;
-  double _currentAmplitude = -160.0;
   final List<double> _amplitudes = List.filled(30, -160.0, growable: true);
 
   @override
@@ -73,6 +71,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
         _imagePath = image.path;
         _isScan = false;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Image attached')),
       );
@@ -86,6 +85,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
         _imagePath = image.path;
         _isScan = true;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Scan attached')),
       );
@@ -99,8 +99,8 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
       setState(() {
         _voicePath = path;
         _isRecording = false;
-        _currentAmplitude = -160.0;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Voice recording attached')),
       );
@@ -117,12 +117,12 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
             .onAmplitudeChanged(const Duration(milliseconds: 50))
             .listen((amp) {
           setState(() {
-            _currentAmplitude = amp.current;
             _amplitudes.removeAt(0);
             _amplitudes.add(amp.current);
           });
         });
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recording started... Tap again to stop')),
         );
@@ -170,12 +170,12 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white, // White Sweep
+      backgroundColor: AppColors.background, // Dark Sweep
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.white),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -233,7 +233,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.greyDark.withOpacity(0.05),
+                        color: AppColors.greyDark.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.black12),
                       ),
@@ -242,10 +242,10 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                           const Icon(LucideIcons.calendar, size: 14, color: Colors.black54),
                           const SizedBox(width: 8),
                           Text(
-                            "Today, ${DateTime.now().hour}:${DateTime.now().minute}",
+                            "Today, ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}",
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.black87,
+                              color: AppColors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -267,14 +267,14 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                       fontSize: 24,
                       height: 1.5,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: AppColors.white,
                     ),
                     decoration: InputDecoration(
                       hintText: _randomPrompt,
-                      hintStyle: const TextStyle(color: Colors.black26),
+                      hintStyle: TextStyle(color: AppColors.white.withValues(alpha: 0.3)),
                       border: InputBorder.none,
                     ),
-                    cursorColor: Colors.black,
+                    cursorColor: AppColors.white,
                   ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 ),
                 
@@ -321,7 +321,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                               height: height,
                               margin: const EdgeInsets.symmetric(horizontal: 1),
                               decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.6),
+                                color: Colors.red.withValues(alpha: 0.6),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             );
@@ -338,7 +338,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -380,7 +380,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.greyDark,
                     borderRadius: BorderRadius.circular(32),
                   ),
                   child: Row(
@@ -439,14 +439,14 @@ class _ToolbarItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.black54, size: 20),
+            Icon(icon, color: AppColors.white.withValues(alpha: 0.5), size: 20),
             const SizedBox(height: 4),
             Text(
               label, 
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10, 
                 fontWeight: FontWeight.w600,
-                color: Colors.black54
+                color: AppColors.white.withValues(alpha: 0.5)
               ),
             ),
           ],

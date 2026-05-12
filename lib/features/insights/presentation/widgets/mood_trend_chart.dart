@@ -16,9 +16,9 @@ class MoodTrendChart extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 8),
       decoration: BoxDecoration(
-        color: AppColors.greyDark.withOpacity(0.5),
+        color: AppColors.greyDark.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.greyMedium.withOpacity(0.3)),
+        border: Border.all(color: AppColors.greyMedium.withValues(alpha: 0.3)),
       ),
       child: LineChart(
         LineChartData(
@@ -26,7 +26,7 @@ class MoodTrendChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: AppColors.greyMedium.withOpacity(0.1),
+              color: AppColors.greyMedium.withValues(alpha: 0.1),
               strokeWidth: 1,
             ),
           ),
@@ -85,8 +85,8 @@ class MoodTrendChart extends StatelessWidget {
                 show: true,
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.white.withOpacity(0.2),
-                    AppColors.white.withOpacity(0.0),
+                    AppColors.white.withValues(alpha: 0.2),
+                    AppColors.white.withValues(alpha: 0.0),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,

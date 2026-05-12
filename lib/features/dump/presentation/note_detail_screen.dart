@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:any_link_preview/any_link_preview.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_colors.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final Map<String, dynamic> note;
@@ -70,7 +67,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final note = widget.note;
-    print("🔍 NoteDetailScreen: Displaying note: $note");
+    // debugPrint("🔍 NoteDetailScreen: Displaying note: $note");
     final content = note['content'] as String;
     final summary = note['summary'] as String?;
     final mood = note['mood'] as String? ?? 'Neutral';
@@ -109,7 +106,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: moodColor.withOpacity(0.05),
+                color: moodColor.withValues(alpha: 0.05),
               ),
             ).animate().fadeIn(duration: 1.seconds).scale(begin: const Offset(0.5, 0.5)),
           ),
@@ -207,7 +204,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             Text(
               "DUMP ANALYSIS",
               style: TextStyle(
-                color: moodColor.withOpacity(0.5),
+                color: moodColor.withValues(alpha: 0.5),
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2,
@@ -228,9 +225,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: moodColor.withOpacity(0.1),
+            color: moodColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: moodColor.withOpacity(0.2)),
+            border: Border.all(color: moodColor.withValues(alpha: 0.2)),
           ),
           child: Icon(LucideIcons.brain, color: moodColor, size: 24),
         ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
@@ -246,13 +243,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
           if (glowColor != null)
           BoxShadow(
-            color: glowColor.withOpacity(0.02),
+            color: glowColor.withValues(alpha: 0.02),
             blurRadius: 40,
             spreadRadius: 1,
           ),
@@ -300,7 +297,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           const Row(
             children: [
               Icon(LucideIcons.sparkles, color: Colors.blueAccent, size: 16),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 "SYNTHESIS",
                 style: TextStyle(
@@ -334,14 +331,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       children: keywords.map((k) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Text(
           "#$k",
           style: TextStyle(
-            color: moodColor.withOpacity(0.8),
+            color: moodColor.withValues(alpha: 0.8),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -373,7 +370,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: moodColor.withOpacity(0.4)),
+                  border: Border.all(color: moodColor.withValues(alpha: 0.4)),
                 ),
                 child: Center(
                   child: Container(
@@ -381,7 +378,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     height: 10,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: moodColor.withOpacity(0.2),
+                      color: moodColor.withValues(alpha: 0.2),
                     ),
                   ),
                 ),
@@ -399,7 +396,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               ),
             ],
           ),
-        )).toList(),
+        )),
       ],
     ).animate().fadeIn(delay: 500.ms);
   }
@@ -445,7 +442,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             borderRadius: BorderRadius.circular(24),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Stack(
@@ -462,7 +459,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(LucideIcons.maximize2, color: Colors.white, size: 16),
@@ -484,7 +481,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         const Row(
           children: [
             Icon(LucideIcons.mic, color: Colors.white38, size: 14),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               "VOICE NOTE",
               style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
@@ -495,9 +492,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Row(
             children: [
@@ -510,7 +507,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       if (_isPlaying)
-                      BoxShadow(color: Colors.redAccent.withOpacity(0.4), blurRadius: 15, spreadRadius: 1),
+                      BoxShadow(color: Colors.redAccent.withValues(alpha: 0.4), blurRadius: 15, spreadRadius: 1),
                     ],
                   ),
                   child: Icon(
@@ -563,7 +560,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     return AnyLinkPreview(
       link: url,
       cache: const Duration(days: 7),
-      backgroundColor: Colors.white.withOpacity(0.05),
+      backgroundColor: Colors.white.withValues(alpha: 0.05),
       borderRadius: 24,
       placeholderWidget: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(24)), child: Row(children: [const Icon(LucideIcons.link, color: Colors.blueAccent), const SizedBox(width: 12), Expanded(child: Text(url, style: const TextStyle(color: Colors.white70, fontSize: 12)))] ) ),
     ).animate().fadeIn();
@@ -611,12 +608,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [moodColor.withOpacity(0.1), Colors.black],
+              colors: [moodColor.withValues(alpha: 0.1), Colors.black],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: moodColor.withOpacity(0.2)),
+            border: Border.all(color: moodColor.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,7 +668,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ),
           ],
           const SizedBox(height: 12),
-          Divider(color: Colors.white.withOpacity(0.05)),
+          Divider(color: Colors.white.withValues(alpha: 0.05)),
         ],
       ),
     );
@@ -680,7 +677,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   void _showFullScreenImage(String url) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.95),
+      barrierColor: Colors.black.withValues(alpha: 0.95),
       builder: (context) => Stack(
         children: [
           Center(child: InteractiveViewer(child: Image.network(url))),

@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../auth/presentation/auth_providers.dart';
 import '../../home/data/notes_provider.dart';
 import '../../dump/presentation/note_detail_screen.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../dump/data/import_service.dart';
 
 
@@ -84,7 +83,7 @@ class SettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: const Icon(LucideIcons.user, color: Colors.white, size: 24),
@@ -133,7 +132,7 @@ class SettingsScreen extends ConsumerWidget {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Text(
@@ -167,9 +166,9 @@ class SettingsScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +182,7 @@ class SettingsScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           dateStr,
-                          style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
                         ),
                       ],
                     ),
@@ -219,7 +218,7 @@ class SettingsScreen extends ConsumerWidget {
         _buildActionButton(
           label: 'Import from File (JSON/Text)',
           icon: LucideIcons.import,
-          color: Colors.blue.withOpacity(0.1),
+          color: Colors.blue.withValues(alpha: 0.1),
           textColor: Colors.blueAccent,
           onTap: () async {
             await ImportService().importFromFile();
@@ -252,7 +251,7 @@ class SettingsScreen extends ConsumerWidget {
         _buildActionButton(
           label: 'Log Out',
           icon: LucideIcons.logOut,
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           textColor: Colors.white,
           onTap: () => _showLogoutDialog(context, ref),
         ),
@@ -260,7 +259,7 @@ class SettingsScreen extends ConsumerWidget {
         _buildActionButton(
           label: 'Delete Account',
           icon: LucideIcons.trash2,
-          color: Colors.red.withOpacity(0.1),
+          color: Colors.red.withValues(alpha: 0.1),
           textColor: Colors.redAccent,
           onTap: () => _showDeleteAccountDialog(context, ref),
         ),

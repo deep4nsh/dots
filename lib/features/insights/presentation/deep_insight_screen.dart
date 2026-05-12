@@ -90,12 +90,12 @@ class DeepInsightScreen extends ConsumerWidget {
   Widget _buildSectionTitle(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.white.withOpacity(0.5), size: 18),
+        Icon(icon, color: AppColors.white.withValues(alpha: 0.5), size: 18),
         const SizedBox(width: 12),
         Text(
           title.toUpperCase(),
           style: TextStyle(
-            color: AppColors.white.withOpacity(0.5),
+            color: AppColors.white.withValues(alpha: 0.5),
             fontSize: 12,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
@@ -110,16 +110,16 @@ class DeepInsightScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white.withOpacity(0.03),
+        color: AppColors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.white.withOpacity(0.05)),
+        border: Border.all(color: AppColors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isPositive ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              color: isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -175,9 +175,9 @@ class DeepInsightScreen extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.white.withOpacity(0.05 * opacity),
+            color: AppColors.white.withValues(alpha: 0.05 * opacity),
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: AppColors.white.withOpacity(0.1 * opacity)),
+            border: Border.all(color: AppColors.white.withValues(alpha: 0.1 * opacity)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -185,7 +185,7 @@ class DeepInsightScreen extends ConsumerWidget {
               Text(
                 entry.key,
                 style: TextStyle(
-                  color: AppColors.white.withOpacity(opacity),
+                  color: AppColors.white.withValues(alpha: opacity),
                   fontWeight: entry.value > 1 ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -207,9 +207,9 @@ class DeepInsightScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white.withOpacity(0.02),
+        color: AppColors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.white.withOpacity(0.05)),
+        border: Border.all(color: AppColors.white.withValues(alpha: 0.05)),
       ),
       child: Text(
         digest,
@@ -229,12 +229,12 @@ class DeepInsightScreen extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.white.withOpacity(0.03),
+            color: AppColors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -365,7 +365,7 @@ class _InsightActionButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.white,
-        side: BorderSide(color: AppColors.white.withOpacity(0.1)),
+        side: BorderSide(color: AppColors.white.withValues(alpha: 0.1)),
         padding: const EdgeInsets.symmetric(vertical: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),

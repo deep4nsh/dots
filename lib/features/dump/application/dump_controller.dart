@@ -18,7 +18,7 @@ class DumpController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = NotesRepository();
+      final repository = ref.read(notesRepositoryProvider);
       
       // 1. Upload files if any
       String? voiceUrl;
@@ -32,7 +32,7 @@ class DumpController extends AsyncNotifier<void> {
       }
 
       // 2. Analyze with AI
-      final aiResult = await AIService().analyzeThought(text);
+      final aiResult = await ref.read(aiServiceProvider).analyzeThought(text);
       
       String? mood;
       String? summary;
@@ -47,7 +47,7 @@ class DumpController extends AsyncNotifier<void> {
       String? reflectionQuestion;
 
       if (aiResult != null && aiResult.isNotEmpty) {
-        print('🧠 DumpController: AI Analysis Result (parsed JSON): $aiResult');
+        // debugPrint('🧠 DumpController: AI Analysis Result (parsed JSON): $aiResult');
         mood = aiResult['mood']?.toString();
         summary = aiResult['summary']?.toString();
         keywords = (aiResult['keywords'] as List?)?.map((e) => e.toString()).toList();
@@ -68,9 +68,9 @@ class DumpController extends AsyncNotifier<void> {
             
         reflectionQuestion = aiResult['reflection_question']?.toString();
 
-        print('🧠 DumpController: Mapped granular values success');
+        // debugPrint('🧠 DumpController: Mapped granular values success');
       } else {
-        print('❌ DumpController: AI Analysis Failed or empty. aiResult: $aiResult');
+        // debugPrint('❌ DumpController: AI Analysis Failed or empty. aiResult: $aiResult');
       }
 
       // 3. Save to Supabase (Cloud)

@@ -20,7 +20,7 @@ class SupabaseService {
       url: url,
       anonKey: anonKey,
     );
-    print("✅ Supabase Initialized");
+    // debugPrint("✅ Supabase Initialized");
   }
 
   /* 

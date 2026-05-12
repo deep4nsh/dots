@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
@@ -15,22 +16,17 @@ class AIService {
   void init() {
     _apiKey = dotenv.env['GROQ_API_KEY'];
     if (_apiKey == null || _apiKey!.isEmpty) {
-      print("⚠️ WARNING: GROQ_API_KEY not found in .env");
-    } else {
-      print("✅ AIService Initialized with Groq (Model: $_model)");
+      // debugPrint("⚠️ WARNING: GROQ_API_KEY not found in .env");
     }
   }
 
   // Analyze a raw thought using Groq
   Future<Map<String, dynamic>?> analyzeThought(String thought) async {
     if (_apiKey == null) {
-      print("❌ AIService: API Key not initialized.");
       return null;
     }
 
     if (thought.trim().isEmpty) return null;
-
-    print("🧠 AIService (Groq): Analyzing thought: '$thought'");
 
     final prompt = '''
     Deeply analyze the following user thought for a minimalist psychological journal.
@@ -87,20 +83,15 @@ class AIService {
       );
 
       if (response.statusCode != 200) {
-        print("❌ Groq API Error: ${response.statusCode} - ${response.body}");
         return null;
       }
 
       final data = jsonDecode(response.body);
       final String content = data['choices'][0]['message']['content'];
       
-      print("🧠 AIService: Raw response content: $content");
-
       final Map<String, dynamic> decoded = jsonDecode(content);
-      print("✅ AIService: Decoded JSON success: $decoded");
       return decoded;
     } catch (e) {
-      print("❌ AIService analyzeThought Error: $e");
       return null;
     }
   }
@@ -108,13 +99,10 @@ class AIService {
   // Synthesize multiple thoughts into a coherent Daily Digest
   Future<String?> generateDailyDigest(List<String> thoughts) async {
     if (_apiKey == null) {
-      print("❌ AIService: API Key not initialized.");
       return null;
     }
     if (thoughts.isEmpty) return null;
 
-    print("🧠 AIService (Groq): Synthesizing ${thoughts.length} thoughts...");
-    
     final thoughtsList = thoughts.map((t) => "- $t").join("\n");
     
     final prompt = '''
@@ -151,15 +139,15 @@ class AIService {
       );
 
       if (response.statusCode != 200) {
-        print("❌ Groq API Error: ${response.statusCode} - ${response.body}");
         return null;
       }
 
       final data = jsonDecode(response.body);
       return data['choices'][0]['message']['content'] as String;
     } catch (e) {
-      print("❌ AIService generateDailyDigest Error: $e");
       return null;
     }
   }
 }
+
+final aiServiceProvider = Provider((ref) => AIService());
