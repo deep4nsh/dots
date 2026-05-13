@@ -56,5 +56,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>dots needs your microphone to record voice notes</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>dots uses on-device speech recognition to transcribe your voice notes for AI analysis</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>dots needs photo library access to attach images to notes</string>
+	<key>NSCameraUsageDescription</key>
+	<string>dots needs camera access to scan documents</string>
 </dict>
 </plist>

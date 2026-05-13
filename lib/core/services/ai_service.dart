@@ -2,27 +2,54 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'media_service.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
   AIService._internal();
 
-  String? _apiKey;
-  static const String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
-  static const String _model = 'llama-3.3-70b-versatile';
+  String? _groqApiKey;
+
+  static const String _groqBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  static const String _groqModel = 'llama-3.3-70b-versatile';
 
   // Initialize with API key from .env
   void init() {
-    _apiKey = dotenv.env['GROQ_API_KEY'];
-    if (_apiKey == null || _apiKey!.isEmpty) {
+    _groqApiKey = dotenv.env['GROQ_API_KEY'];
+    mediaService.init();
+
+    if (_groqApiKey == null || _groqApiKey!.isEmpty) {
       // debugPrint("⚠️ WARNING: GROQ_API_KEY not found in .env");
     }
   }
 
-  // Analyze a raw thought using Groq
-  Future<Map<String, dynamic>?> analyzeThought(String thought) async {
-    if (_apiKey == null) {
+  // Analyze thought with optional media (images, audio, video)
+  // On-device processing for media + Groq for psychological analysis
+  Future<Map<String, dynamic>?> analyzeThought(
+    String thought, {
+    String? imagePath,
+    String? voiceTranscription,
+    String? videoPath,
+  }) async {
+    String enrichedThought = thought;
+
+    // On-device analysis of media (no API costs)
+    if (imagePath != null || voiceTranscription != null) {
+      enrichedThought = await mediaService.enrichMediaContext(
+        thought,
+        imagePath: imagePath,
+        voiceTranscription: voiceTranscription,
+      );
+    }
+
+    // Send enriched text to Groq for psychological analysis
+    return _analyzeWithGroq(enrichedThought);
+  }
+
+  // Analyze using Groq (text-only, cheaper)
+  Future<Map<String, dynamic>?> _analyzeWithGroq(String thought) async {
+    if (_groqApiKey == null) {
       return null;
     }
 
@@ -63,13 +90,13 @@ class AIService {
 
     try {
       final response = await http.post(
-        Uri.parse(_baseUrl),
+        Uri.parse(_groqBaseUrl),
         headers: {
-          'Authorization': 'Bearer $_apiKey',
+          'Authorization': 'Bearer $_groqApiKey',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'model': _model,
+          'model': _groqModel,
           'messages': [
             {
               'role': 'system',
@@ -78,7 +105,7 @@ class AIService {
             {'role': 'user', 'content': prompt}
           ],
           'response_format': {'type': 'json_object'},
-          'temperature': 0.1, // Low temperature for consistent extraction
+          'temperature': 0.1,
         }),
       );
 
@@ -88,7 +115,7 @@ class AIService {
 
       final data = jsonDecode(response.body);
       final String content = data['choices'][0]['message']['content'];
-      
+
       final Map<String, dynamic> decoded = jsonDecode(content);
       return decoded;
     } catch (e) {
@@ -96,37 +123,38 @@ class AIService {
     }
   }
 
+
   // Synthesize multiple thoughts into a coherent Daily Digest
   Future<String?> generateDailyDigest(List<String> thoughts) async {
-    if (_apiKey == null) {
+    if (_groqApiKey == null) {
       return null;
     }
     if (thoughts.isEmpty) return null;
 
     final thoughtsList = thoughts.map((t) => "- $t").join("\n");
-    
+
     final prompt = '''
     You are an AI assistant for 'dots', a minimalist thought journal.
     Below are the user's raw thoughts captured today:
-    
+
     $thoughtsList
-    
+
     TASK:
     1. Identify common themes or repeating patterns.
     2. Synthesize these into a single, cohesive "Daily Insight".
-    3. Keep it to 1-2 paragraphs max, high-quality, and reflective. 
+    3. Keep it to 1-2 paragraphs max, high-quality, and reflective.
     4. Focus on "connecting the dots" between scattered ideas.
     ''';
 
     try {
       final response = await http.post(
-        Uri.parse(_baseUrl),
+        Uri.parse(_groqBaseUrl),
         headers: {
-          'Authorization': 'Bearer $_apiKey',
+          'Authorization': 'Bearer $_groqApiKey',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'model': _model,
+          'model': _groqModel,
           'messages': [
             {
               'role': 'system',

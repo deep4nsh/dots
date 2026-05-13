@@ -21,6 +21,7 @@ class NotesRepository {
     String? reflectionQuestion,
     String? voiceUrl,
     String? imageUrl,
+    String? videoUrl,
     String? linkUrl,
     bool isScan = false,
   }) async {
@@ -40,6 +41,7 @@ class NotesRepository {
         'reflection_question': reflectionQuestion,
         'voice_url': voiceUrl,
         'image_url': imageUrl,
+        'video_url': videoUrl,
         'link_url': linkUrl,
         'is_scan': isScan,
         'user_id': _client.auth.currentUser?.id,

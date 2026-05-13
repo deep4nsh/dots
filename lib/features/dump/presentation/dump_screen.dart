@@ -10,7 +10,10 @@ import 'package:dots_mobile/core/presentation/widgets/aesthetic_dots_background.
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
+import 'dart:io';
+import 'package:dots_mobile/core/constants/media_constants.dart';
 
 class DumpScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? initialData;
@@ -28,11 +31,15 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   // Multimedia State
   String? _imagePath;
   String? _voicePath;
+  String? _videoPath;
+  String? _voiceTranscription = '';
   String? _linkUrl;
   bool _isScan = false;
-  
+
   final AudioRecorder _recorder = AudioRecorder();
   final ImagePicker _picker = ImagePicker();
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  bool _speechAvailable = false;
 
   // Recording Visuals State
   bool _isRecording = false;
@@ -43,7 +50,8 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   void initState() {
     super.initState();
     _randomPrompt = DumpPrompts.getRandom();
-    
+    _initSpeechToText();
+
     if (widget.initialData != null) {
       final data = widget.initialData!;
       if (data.containsKey('content')) {
@@ -52,8 +60,18 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
       if (data.containsKey('image_url')) {
         _imagePath = data['image_url'] as String?;
       }
+      if (data.containsKey('video_url')) {
+        _videoPath = data['video_url'] as String?;
+      }
       // Add other fields processing if needed
     }
+  }
+
+  Future<void> _initSpeechToText() async {
+    _speechAvailable = await _speechToText.initialize(
+      onError: (error) {},
+      onStatus: (status) {},
+    );
   }
 
   @override
@@ -61,11 +79,17 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
     _controller.dispose();
     _amplitudeSubscription?.cancel();
     _recorder.dispose();
+    _speechToText.cancel();
     super.dispose();
   }
 
   Future<void> _handleImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: MediaConstants.maxImageDimension,
+      maxHeight: MediaConstants.maxImageDimension,
+      imageQuality: MediaConstants.imageQuality,
+    );
     if (image != null) {
       setState(() {
         _imagePath = image.path;
@@ -79,7 +103,12 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   }
 
   Future<void> _handleScan() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: MediaConstants.maxImageDimension,
+      maxHeight: MediaConstants.maxImageDimension,
+      imageQuality: MediaConstants.imageQuality,
+    );
     if (image != null) {
       setState(() {
         _imagePath = image.path;
@@ -95,22 +124,57 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
   Future<void> _handleVoice() async {
     if (await _recorder.isRecording()) {
       final path = await _recorder.stop();
+      _speechToText.stop();
       _amplitudeSubscription?.cancel();
+      
+      if (path != null) {
+        final file = File(path);
+        final size = await file.length();
+        if (size > MediaConstants.mbToBytes(MediaConstants.maxVoiceSizeMB)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Recording too large (max ${MediaConstants.maxVoiceSizeMB}MB)')),
+            );
+          }
+          await file.delete();
+          setState(() {
+            _isRecording = false;
+          });
+          return;
+        }
+      }
+
       setState(() {
         _voicePath = path;
         _isRecording = false;
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Voice recording attached')),
+        SnackBar(
+          content: Text(_voiceTranscription?.isNotEmpty == true
+              ? 'Voice recording attached (transcribed)'
+              : 'Voice recording attached'),
+        ),
       );
     } else {
       if (await _recorder.hasPermission()) {
         final directory = await getApplicationDocumentsDirectory();
         final path = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        
+
         await _recorder.start(const RecordConfig(), path: path);
-        
+
+        // Start concurrent speech-to-text
+        if (_speechAvailable) {
+          _speechToText.listen(
+            onResult: (result) {
+              setState(() => _voiceTranscription = result.recognizedWords);
+            },
+            listenFor: const Duration(minutes: 5),
+            pauseFor: const Duration(seconds: 5),
+            localeId: 'en_US',
+          );
+        }
+
         setState(() => _isRecording = true);
 
         _amplitudeSubscription = _recorder
@@ -127,6 +191,30 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
           const SnackBar(content: Text('Recording started... Tap again to stop')),
         );
       }
+    }
+  }
+
+  Future<void> _handleVideo() async {
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: MediaConstants.maxVideoDuration,
+    );
+    if (video != null) {
+      final file = File(video.path);
+      final size = await file.length();
+      if (size > MediaConstants.mbToBytes(MediaConstants.maxVideoSizeMB)) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Video too large (max ${MediaConstants.maxVideoSizeMB}MB)')),
+        );
+        return;
+      }
+
+      setState(() => _videoPath = video.path);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Video attached')),
+      );
     }
   }
 
@@ -189,11 +277,13 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                    await ref.read(dumpControllerProvider.notifier).saveDump(
                      _controller.text,
                      voicePath: _voicePath,
+                     voiceTranscription: _voiceTranscription?.isNotEmpty == true ? _voiceTranscription : null,
                      imagePath: _imagePath,
+                     videoPath: _videoPath,
                      linkUrl: _linkUrl,
                      isScan: _isScan,
                    );
-                   if (context.mounted) context.pop(); 
+                   if (context.mounted) context.pop();
                 },
                 icon: isLoading 
                     ? const SizedBox(
@@ -333,7 +423,7 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                 ).animate().fadeIn().slideY(begin: 0.2, end: 0),
                 
                 // Attachment Preview
-                if (_imagePath != null || _voicePath != null || _linkUrl != null)
+                if (_imagePath != null || _voicePath != null || _videoPath != null || _linkUrl != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   margin: const EdgeInsets.only(bottom: 8),
@@ -353,7 +443,16 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                       if (_voicePath != null) ...[
                         const Icon(LucideIcons.mic, size: 14, color: Colors.red),
                         const SizedBox(width: 4),
-                        const Text("Voice", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text(
+                          _voiceTranscription?.isNotEmpty == true ? "Voice (transcribed)" : "Voice",
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (_videoPath != null) ...[
+                        const Icon(LucideIcons.video, size: 14, color: Colors.purple),
+                        const SizedBox(width: 4),
+                        const Text("Video", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 8),
                       ],
                       if (_linkUrl != null) ...[
@@ -366,8 +465,10 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                         onTap: () => setState(() {
                           _imagePath = null;
                           _voicePath = null;
+                          _videoPath = null;
                           _linkUrl = null;
                           _isScan = false;
+                          _voiceTranscription = '';
                         }),
                         child: const Icon(LucideIcons.x, size: 14, color: Colors.black54),
                       ),
@@ -387,22 +488,27 @@ class _DumpScreenState extends ConsumerState<DumpScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _ToolbarItem(
-                        icon: LucideIcons.mic, 
+                        icon: LucideIcons.mic,
                         label: "Voice",
                         onPressed: () => _handleVoice(),
                       ),
                       _ToolbarItem(
-                        icon: LucideIcons.image, 
+                        icon: LucideIcons.image,
                         label: "Image",
                         onPressed: () => _handleImage(),
                       ),
                       _ToolbarItem(
-                        icon: LucideIcons.scanLine, 
+                        icon: LucideIcons.scanLine,
                         label: "Scan",
                         onPressed: () => _handleScan(),
                       ),
                       _ToolbarItem(
-                        icon: LucideIcons.link, 
+                        icon: LucideIcons.video,
+                        label: "Video",
+                        onPressed: () => _handleVideo(),
+                      ),
+                      _ToolbarItem(
+                        icon: LucideIcons.link,
                         label: "Link",
                         onPressed: () => _handleLink(),
                       ),

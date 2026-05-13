@@ -4,7 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:any_link_preview/any_link_preview.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:ui';
+import 'dart:async';
 
 class NoteDetailScreen extends StatefulWidget {
   final Map<String, dynamic> note;
@@ -88,6 +90,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     // Multimedia
     final imageUrl = note['image_url'] as String?;
     final voiceUrl = note['voice_url'] as String?;
+    final videoUrl = note['video_url'] as String?;
     final linkUrl = note['link_url'] as String?;
     final isScan = note['is_scan'] as bool? ?? false;
 
@@ -149,8 +152,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       const SizedBox(height: 32),
                       
                       // Multimedia Section
-                      if (imageUrl != null || voiceUrl != null || linkUrl != null)
-                      _buildMultimediaSection(imageUrl, voiceUrl, linkUrl, isScan),
+                      if (imageUrl != null || voiceUrl != null || videoUrl != null || linkUrl != null)
+                      _buildMultimediaSection(imageUrl, voiceUrl, videoUrl, linkUrl, isScan),
                       
                       const SizedBox(height: 32),
                       
@@ -401,13 +404,18 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     ).animate().fadeIn(delay: 500.ms);
   }
 
-  Widget _buildMultimediaSection(String? imageUrl, String? voiceUrl, String? linkUrl, bool isScan) {
+  Widget _buildMultimediaSection(String? imageUrl, String? voiceUrl, String? videoUrl, String? linkUrl, bool isScan) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (imageUrl != null)
         _buildImagePreview(imageUrl, isScan),
         
+        if (videoUrl != null) ...[
+          const SizedBox(height: 12),
+          _buildVideoPlayer(videoUrl),
+        ],
+
         if (voiceUrl != null) ...[
           const SizedBox(height: 12),
           _buildVoicePlayer(voiceUrl),
@@ -419,6 +427,26 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ],
       ],
     );
+  }
+
+  Widget _buildVideoPlayer(String url) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(LucideIcons.video, color: Colors.white38, size: 14),
+            SizedBox(width: 8),
+            Text(
+              "VIDEO ATTACHMENT",
+              style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _VideoPlayerWidget(url: url),
+      ],
+    ).animate().fadeIn().scale();
   }
 
   Widget _buildImagePreview(String url, bool isScan) {
@@ -690,6 +718,179 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
+}
+
+class _VideoPlayerWidget extends StatefulWidget {
+  final String url;
+  const _VideoPlayerWidget({required this.url});
+
+  @override
+  State<_VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<_VideoPlayerWidget> {
+  late VideoPlayerController _controller;
+  bool _showControls = true;
+  Timer? _hideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        setState(() {});
+      });
+    
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _togglePlay() {
+    setState(() {
+      _controller.value.isPlaying ? _controller.pause() : _controller.play();
+    });
+    _resetHideTimer();
+  }
+
+  void _resetHideTimer() {
+    _hideTimer?.cancel();
+    if (_controller.value.isPlaying) {
+      _hideTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _showControls = false);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_controller.value.isInitialized) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Center(child: CircularProgressIndicator(color: Colors.white30)),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() => _showControls = !_showControls);
+        if (_showControls) _resetHideTimer();
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              VideoPlayer(_controller),
+              
+              // Gradient Overlay for controls visibility
+              AnimatedOpacity(
+                opacity: _showControls ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.4),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.4),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Play/Pause Button
+              AnimatedOpacity(
+                opacity: _showControls ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _togglePlay,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _controller.value.isPlaying ? LucideIcons.pause : LucideIcons.play,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Progress Bar and Duration
+              AnimatedOpacity(
+                opacity: _showControls ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Column(
+                    children: [
+                      VideoProgressIndicator(
+                        _controller,
+                        allowScrubbing: true,
+                        colors: const VideoProgressColors(
+                          playedColor: Colors.white,
+                          bufferedColor: Colors.white24,
+                          backgroundColor: Colors.white10,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatDuration(_controller.value.position),
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              _formatDuration(_controller.value.duration),
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

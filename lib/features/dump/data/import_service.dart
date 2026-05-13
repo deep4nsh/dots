@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:dots_mobile/core/constants/media_constants.dart';
 import 'notes_repository.dart';
 
 class ImportService {
@@ -67,9 +68,16 @@ class ImportService {
       );
 
       if (result != null) {
-        File file = File(result.files.single.path!);
+        final platformFile = result.files.single;
+        if (platformFile.size > MediaConstants.mbToBytes(MediaConstants.maxFileSizeMB)) {
+           // In a real app we might want to show a toast/snack here. 
+           // For now we just return to protect the app.
+           return;
+        }
+
+        File file = File(platformFile.path!);
         String content = await file.readAsString();
-        String extension = result.files.single.extension?.toLowerCase() ?? '';
+        String extension = platformFile.extension?.toLowerCase() ?? '';
 
         if (extension == 'json') {
           await _parseAndImportJson(content);
